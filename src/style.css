@@ -1,0 +1,106 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Brand CSS custom properties ───────────────────────────────────────── */
+:root {
+  /* ── Brand palette ─────────────────────────────────────────── */
+  --color-primary:       #FFBF00;   /* Amber Gold — primary interactive */
+  --color-primary-dark:  #CC9900;   /* Darker amber — hover state */
+  --color-primary-light: #FFF78D;   /* Pale Yellow — selection / soft bg */
+  --color-brand-dark:    #283F24;   /* Deep Forest — sidebar bg, dark text on primary */
+  --color-brand-mid:     #467235;   /* Forest Green — secondary accent */
+
+  /* ── Sidebar dark theme ─────────────────────────────────────── */
+  --sidebar-bg:          #283F24;                   /* Deep Forest */
+  --sidebar-hover:       rgba(70, 114, 53, 0.45);   /* Forest Green @ 45% */
+  --sidebar-active-bg:   rgba(255, 191, 0, 0.18);   /* Amber @ 18% */
+  --sidebar-active-text: #FFBF00;                   /* Amber Gold */
+  --sidebar-text:        rgba(255, 255, 255, 0.92);
+  --sidebar-text-muted:  rgba(255, 255, 255, 0.55);
+  --sidebar-border:      rgba(255, 255, 255, 0.09);
+
+  /* ── Semantic tokens for light-area components ──────────────── */
+  --color-primary-focus-ring: rgba(255, 191, 0, 0.30);  /* focus ring glow */
+  --color-nav-active-bg:      #FFF78D;   /* Pale Yellow — active nav bg */
+  --color-nav-active-text:    #283F24;   /* Deep Forest — text on yellow bg */
+  --color-nav-hover-bg:       #FFFDE7;   /* Very light amber tint on hover */
+  --color-selection-bg:       #FFF78D;   /* Row / card selection bg */
+  --color-table-hover:        #FFFDE7;   /* Table row hover */
+  --color-badge-bg:           #FFF78D;   /* Primary badge background */
+  --color-badge-text:         #283F24;   /* Primary badge text */
+  --color-secondary-badge-bg: rgba(70, 114, 53, 0.12);   /* Secondary/green badge bg */
+  --color-secondary-badge-text: #2D5C1E;  /* Darker green for badge text */
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-size: 14px;
+  }
+
+  body {
+    margin: 0;
+    font-family: 'Inter', system-ui, sans-serif;
+    min-width: 1366px;
+    @apply text-gray-900 bg-white;
+  }
+
+  /* Global focus ring — amber primary */
+  :focus-visible {
+    outline: 2px solid #FFBF00;
+    outline-offset: 2px;
+  }
+
+  /* Tailwind primary color shim — maps `bg-primary`, `text-primary`, `ring-primary` */
+  /* These are used in button.tsx via Tailwind utility classes */
+}
+
+/* ─── Sidebar dark theme overrides ──────────────────────────────────────── */
+/* Applied via [data-sidebar] attribute on the <aside> element */
+[data-sidebar] {
+  background-color: var(--sidebar-bg);
+  border-right-color: var(--sidebar-border);
+  color: var(--sidebar-text);
+}
+
+[data-sidebar] .sidebar-group-label {
+  color: var(--sidebar-text-muted);
+}
+
+[data-sidebar] .sidebar-divider {
+  background-color: var(--sidebar-border);
+}
+
+/* ─── Native date/time input accent color override ──────────────────────── */
+/* Overrides the browser's default blue accent on <input type="date|time|...>  */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"] {
+  accent-color: #FFBF00;
+  color-scheme: light;
+}
+
+/* ─── Scrollbar theming ──────────────────────────────────────────────────── */
+::-webkit-scrollbar          { width: 6px; height: 6px; }
+::-webkit-scrollbar-track    { background: transparent; }
+::-webkit-scrollbar-thumb    { background: #d1d5db; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+/* ─── Reduced motion ─────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
