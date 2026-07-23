@@ -8,7 +8,7 @@ import type { TripDetail, BillLeg } from '@/types/transportTrip';
 import { cn } from '@/lib/cn';
 import { LoadingState } from '@/components/shared/LoadingState';
 import { ErrorState } from '@/components/shared/ErrorState';
-import { formatDateTimeShort, formatMinutes, stripWarehousePrefix } from '@/lib/format';
+import { formatDateTimeShort, formatMinutes, stripWarehousePrefix, formatWeight } from '@/lib/format';
 
 export interface TripDetailPanelProps {
   tripId: string;
@@ -96,7 +96,7 @@ export function TripDetailPanel({ tripId, onClose }: TripDetailPanelProps) {
             </div>
             <div>
               <div className="text-[10px] text-slate-400 uppercase tracking-wide mb-0.5">Tổng tải trọng</div>
-              <div className="text-sm font-semibold text-slate-700">{ov.totalLoad.toLocaleString('vi-VN')} kg</div>
+              <div className="text-sm font-semibold text-slate-700">{formatWeight(ov.totalLoad)}</div>
             </div>
             <div className="col-span-2">
               <div className="text-[10px] text-slate-400 uppercase tracking-wide mb-0.5">Kho đầu</div>
@@ -147,12 +147,12 @@ export function TripDetailPanel({ tripId, onClose }: TripDetailPanelProps) {
                       <td className="py-2 px-3 tabular-nums text-center text-slate-500">{formatMinutes(s.totalTime)}</td>
                       <td className="py-2 px-3 tabular-nums text-right">
                         {s.uploadWeight > 0
-                          ? <span className="font-semibold text-brand-mid">{s.uploadWeight.toLocaleString('vi-VN')}</span>
+                          ? <span className="font-semibold text-brand-mid">{formatWeight(s.uploadWeight)}</span>
                           : <span className="text-slate-300">—</span>}
                       </td>
                       <td className="py-2 px-3 tabular-nums text-right">
                         {s.downloadWeight > 0
-                          ? <span className="font-semibold text-red-500">{s.downloadWeight.toLocaleString('vi-VN')}</span>
+                          ? <span className="font-semibold text-red-500">{formatWeight(s.downloadWeight)}</span>
                           : <span className="text-slate-300">—</span>}
                       </td>
                       <td className="py-2 px-3 tabular-nums text-right text-slate-400">
@@ -230,7 +230,7 @@ export function TripDetailPanel({ tripId, onClose }: TripDetailPanelProps) {
                         <td className="py-1.5 px-3 font-mono text-brand-mid text-[11px]">{b.billId}</td>
                         <td className="py-1.5 px-3 text-slate-600 text-center">{stripWarehousePrefix(b.originWarehouse)}</td>
                         <td className="py-1.5 px-3 text-slate-600 text-center">{stripWarehousePrefix(b.destinationWarehouse)}</td>
-                        <td className="py-1.5 px-3 tabular-nums text-center text-slate-700 font-medium">{b.actualWeight}</td>
+                        <td className="py-1.5 px-3 tabular-nums text-center text-slate-700 font-medium">{formatWeight(b.actualWeight)}</td>
                         <td className="py-1.5 px-3 tabular-nums text-center text-slate-500 whitespace-nowrap">{formatDateTimeShort(b.uploadAt)}</td>
                         <td className="py-1.5 px-3 tabular-nums text-center text-slate-500 whitespace-nowrap">{formatDateTimeShort(b.downloadAt)}</td>
                       </tr>

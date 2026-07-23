@@ -3,15 +3,15 @@
  * Date range is driven entirely by globalDateRange from Zustand uiStore.
  */
 
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useUIStore } from '@/store/uiStore';
 
 import { KPISection } from './KPISection';
 import { WarehouseStatsPanel } from './WarehouseStatsPanel';
 import { TransportStatsPanel } from './TransportStatsPanel';
+import { ServiceWeightTreemap } from './ServiceWeightTreemap';
 import { StatsCarousel } from '@/components/shared/StatsCarousel';
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -23,19 +23,10 @@ export default function Dashboard() {
   // ── Data fetch ────────────────────────────────────────────────────────────
   // When globalDateRange changes, the query key changes and TanStack Query
   // automatically triggers a new fetch.
-  const { data, isLoading, error, refetch } = useDashboard({
+  const { data, isLoading, error } = useDashboard({
     startDate: globalDateRange.startDate,
     endDate: globalDateRange.endDate,
   });
-
-  // ── Handlers ──────────────────────────────────────────────────────────────
-
-  /**
-   * Manual refresh — re-fetches data for the current global date range.
-   */
-  function handleRefresh() {
-    refetch();
-  }
 
   // ── Stale-data flag — we have previous data but a new error arrived
   const isStale = error !== null && data !== null;
@@ -43,22 +34,7 @@ export default function Dashboard() {
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="space-y-4">
-      {/* ── Standalone Refresh button ────────────────────────────────────── */}
-      <div className="flex justify-end">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleRefresh}
-          disabled={isLoading}
-          aria-label="Refresh dashboard data"
-          className="flex items-center gap-2 h-9 text-sm"
-        >
-          <RefreshCw size={14} aria-hidden="true" className={isLoading ? 'animate-spin' : ''} />
-          Tải lại
-        </Button>
-      </div>
-
-      {/* ── Error banner with stale-data indicator ─────────────── */}
+      {/* ── Error banner ───────────────────────────────────────────────── */}
       {error !== null && (
         <div
           role="alert"
@@ -70,22 +46,13 @@ export default function Dashboard() {
             aria-hidden="true"
           />
           <div className="flex-1 space-y-1">
-            <p className="font-medium">Failed to load dashboard data.</p>
+            <p className="font-medium">Không tải được dữ liệu dashboard.</p>
             {isStale && (
               <p className="text-red-600">
-                The data displayed may be outdated (stale).
+                Dữ liệu hiển thị có thể đã lỗi thời.
               </p>
             )}
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            className="border-red-300 text-red-700 hover:bg-red-100"
-          >
-            Retry
-          </Button>
         </div>
       )}
 
@@ -102,6 +69,15 @@ export default function Dashboard() {
           {
             title: 'Thống kê nhập/xuất',
             content: <TransportStatsPanel data={data} isLoading={isLoading} />,
+          },
+          {
+            title: 'Tỉ trọng dịch vụ',
+            content: (
+              <ServiceWeightTreemap
+                data={data?.billStats}
+                isLoading={isLoading}
+              />
+            ),
           },
         ]}
       />

@@ -1,12 +1,13 @@
 /**
  * useBills hook — paginated, sorted, and filtered bill of lading list
  * backed by URL search params for bookmarkable, back-button-safe state.
+ * Powered by TanStack Query for caching (staleTime 10 min).
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { billOfLadingService } from '../services/billOfLadingService';
 import type { BillListItem, BillSortField, BillStatus } from '../types/billOfLading';
-import type { SortDir } from '../types/transportTrip';
 import { PAGE_SIZE } from '../lib/constants';
 import { useUrlParams } from './useUrlParams';
 import type { UrlParamsConfig } from './useUrlParams';
@@ -14,19 +15,15 @@ import type { UrlParamsConfig } from './useUrlParams';
 // ── Parsed URL state ──────────────────────────────────────────────────────────
 
 /** Valid BillStatus values, used when parsing the URL param. */
-const VALID_BILL_STATUSES: BillStatus[] = ['Unscheduled', 'Scheduled', 'In Transit', 'Delivered'];
+const VALID_BILL_STATUSES: BillStatus[] = ['ESTIMATED', 'MODIFIED', 'ACTUAL'];
 /** Valid sort fields for bills, used when parsing the URL param. */
-const VALID_BILL_SORT_FIELDS: BillSortField[] = ['id', 'weightKg', 'status', 'scheduledDate'];
-/** Valid sort directions. */
-const VALID_SORT_DIRS: SortDir[] = ['asc', 'desc'];
+const VALID_BILL_SORT_FIELDS: BillSortField[] = ['id', 'actualWeight'];
 
-function parseBillStatuses(raw: string | null): BillStatus[] | undefined {
-  if (!raw) return undefined;
-  const parsed = raw
-    .split(',')
-    .map((s) => s.trim())
-    .filter((s): s is BillStatus => VALID_BILL_STATUSES.includes(s as BillStatus));
-  return parsed.length > 0 ? parsed : undefined;
+function parseBillStatus(raw: string | null): BillStatus | undefined {
+  if (raw && VALID_BILL_STATUSES.includes(raw as BillStatus)) {
+    return raw as BillStatus;
+  }
+  return undefined;
 }
 
 function parseBillSortField(raw: string | null): BillSortField | undefined {
@@ -36,29 +33,32 @@ function parseBillSortField(raw: string | null): BillSortField | undefined {
   return undefined;
 }
 
-function parseSortDir(raw: string | null): SortDir | undefined {
-  if (raw && VALID_SORT_DIRS.includes(raw as SortDir)) {
-    return raw as SortDir;
+function parseSortDir(raw: string | null): 'asc' | 'desc' | undefined {
+  if (raw === 'asc' || raw === 'desc') {
+    return raw;
   }
   return undefined;
 }
 
-// parsePage kept for completeness (was a private helper)
-function parsePage(raw: string | null): number {
+function parseNumber(raw: string | null): number | undefined {
+  if (!raw) return undefined;
   const n = Number(raw);
-  return Number.isInteger(n) && n >= 1 ? n : 1;
+  return Number.isInteger(n) ? n : undefined;
 }
-// Suppress unused warning — kept intentionally as a private helper
-void parsePage;
+
+function parseString(raw: string | null): string | undefined {
+  if (!raw) return undefined;
+  const trimmed = raw.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
 
 // ── BillFilters interface ─────────────────────────────────────────────────────
 
 interface BillFilters extends Record<string, unknown> {
-  statuses: BillStatus[] | undefined;
-  startDate: string | undefined;
-  endDate: string | undefined;
-  origin: string | undefined;
-  destination: string | undefined;
+  status: BillStatus | undefined;
+  id: string | undefined;
+  warehouseId: number | undefined;
+  transportTripId: string | undefined;
 }
 
 // ── Config ────────────────────────────────────────────────────────────────────
@@ -66,47 +66,39 @@ interface BillFilters extends Record<string, unknown> {
 const billParamsConfig: UrlParamsConfig<BillFilters> = {
   parseFilters(params) {
     return {
-      statuses: parseBillStatuses(params.get('status')),
-      startDate: params.get('startDate') ?? undefined,
-      endDate: params.get('endDate') ?? undefined,
-      origin: params.get('origin') ?? undefined,
-      destination: params.get('destination') ?? undefined,
+      status: parseBillStatus(params.get('status')),
+      id: parseString(params.get('id')),
+      warehouseId: parseNumber(params.get('warehouseId')),
+      transportTripId: parseString(params.get('transportTripId')),
     };
   },
   serializeFilters(params, partial) {
-    if ('statuses' in partial) {
-      if (partial.statuses && partial.statuses.length > 0) {
-        params.set('status', partial.statuses.join(','));
+    if ('status' in partial) {
+      if (partial.status) {
+        params.set('status', partial.status);
       } else {
         params.delete('status');
       }
     }
-    if ('startDate' in partial) {
-      if (partial.startDate) {
-        params.set('startDate', partial.startDate);
+    if ('id' in partial) {
+      if (partial.id !== undefined) {
+        params.set('id', partial.id);
       } else {
-        params.delete('startDate');
+        params.delete('id');
       }
     }
-    if ('endDate' in partial) {
-      if (partial.endDate) {
-        params.set('endDate', partial.endDate);
+    if ('warehouseId' in partial) {
+      if (partial.warehouseId !== undefined) {
+        params.set('warehouseId', partial.warehouseId.toString());
       } else {
-        params.delete('endDate');
+        params.delete('warehouseId');
       }
     }
-    if ('origin' in partial) {
-      if (partial.origin) {
-        params.set('origin', partial.origin);
+    if ('transportTripId' in partial) {
+      if (partial.transportTripId !== undefined) {
+        params.set('transportTripId', partial.transportTripId);
       } else {
-        params.delete('origin');
-      }
-    }
-    if ('destination' in partial) {
-      if (partial.destination) {
-        params.set('destination', partial.destination);
-      } else {
-        params.delete('destination');
+        params.delete('transportTripId');
       }
     }
     return params;
@@ -117,11 +109,6 @@ const billParamsConfig: UrlParamsConfig<BillFilters> = {
 
 // ── Return type ───────────────────────────────────────────────────────────────
 
-/**
- * Core data the hook returns per the spec.
- * Setters are exposed so the consuming page component can write URL state
- * through the same hook without importing useSearchParams itself.
- */
 export interface UseBillsResult {
   // Data
   data: BillListItem[];
@@ -132,111 +119,124 @@ export interface UseBillsResult {
   // Current parsed URL params (read-side, useful for controlled UI)
   page: number;
   sortField: BillSortField | undefined;
-  sortDir: SortDir | undefined;
-  statuses: BillStatus[] | undefined;
-  startDate: string | undefined;
-  endDate: string | undefined;
-  origin: string | undefined;
-  destination: string | undefined;
+  status: BillStatus | undefined;
+  id: string | undefined;
+  warehouseId: number | undefined;
+  transportTripId: string | undefined;
+  /** true once the user has explicitly triggered a search */
+  hasSearched: boolean;
   // URL write-back helpers (resets page to 1 on filter/sort changes)
   setPage: (page: number) => void;
-  setSort: (field: BillSortField | undefined, dir: SortDir | undefined) => void;
+  setSort: (field: BillSortField | undefined, dir: 'asc' | 'desc' | undefined) => void;
   setFilters: (filters: {
-    statuses?: BillStatus[];
-    startDate?: string;
-    endDate?: string;
-    origin?: string;
-    destination?: string;
+    status?: BillStatus;
+    id?: string;
+    warehouseId?: number;
+    transportTripId?: string;
   }) => void;
+  /** Clears all filters and resets the hasSearched flag */
+  clearFilters: () => void;
 }
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
 export function useBills(): UseBillsResult {
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const {
     page,
     sortField,
-    sortDir,
     filters,
     setPage,
     setSort,
-    setFilters: setFiltersUrl,
   } = useUrlParams<BillFilters>(billParamsConfig);
 
-  const { statuses, startDate, endDate, origin, destination } = filters;
+  const { status, id, warehouseId, transportTripId } = filters;
 
-  // Async state
-  const [data, setData] = useState<BillListItem[]>([]);
-  const [totalPages, setTotalPages] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-  // Increment to trigger a manual refetch without changing URL params
-  const [fetchCount, setFetchCount] = useState(0);
+  // `s=1` in the URL means the user has explicitly triggered a search
+  const hasSearched = searchParams.get('s') === '1';
 
-  const refetch = useCallback(() => {
-    setFetchCount((c) => c + 1);
-  }, []);
+  // Stable string key for filters to avoid unnecessary cache invalidations
+  const filtersKey = `${status ?? ''}-${id ?? ''}-${warehouseId ?? ''}-${transportTripId ?? ''}`;
 
-  // Stable string key for the statuses array so useEffect dependency comparison works
-  const statusesKey = statuses?.join(',') ?? '';
+  // ── TanStack Query — only runs after user presses "Tìm" ──────────────────
+  const {
+    data: queryData,
+    isFetching,
+    error: queryError,
+    refetch,
+  } = useQuery({
+    queryKey: ['bills', page, sortField, filtersKey],
+    queryFn: () => {
+      const typedSortField = sortField as BillSortField | undefined;
+      const sort = typedSortField ? `${typedSortField},desc` : undefined;
 
-  useEffect(() => {
-    let cancelled = false;
-
-    setIsLoading(true);
-    setError(null);
-
-    const typedSortField = sortField as BillSortField | undefined;
-    const typedSortDir = sortDir as SortDir | undefined;
-
-    billOfLadingService
-      .getBills({
+      return billOfLadingService.getBills({
         page,
-        pageSize: PAGE_SIZE,
-        ...(typedSortField !== undefined ? { sortField: typedSortField } : {}),
-        ...(typedSortDir !== undefined ? { sortDir: typedSortDir } : {}),
-        ...(statuses !== undefined ? { status: statuses } : {}),
-        ...(startDate !== undefined ? { startDate } : {}),
-        ...(endDate !== undefined ? { endDate } : {}),
-        ...(origin !== undefined ? { originWarehouse: origin } : {}),
-        ...(destination !== undefined ? { destinationWarehouse: destination } : {}),
-      })
-      .then((result) => {
-        if (!cancelled) {
-          setData(result.data);
-          setTotalPages(result.totalPages);
-          setIsLoading(false);
-        }
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) {
-          setError(err instanceof Error ? err : new Error(String(err)));
-          setIsLoading(false);
-        }
+        size: PAGE_SIZE,
+        ...(sort !== undefined ? { sort } : {}),
+        ...(status !== undefined ? { status } : {}),
+        ...(id !== undefined ? { id } : {}),
+        ...(warehouseId !== undefined ? { warehouseId } : {}),
+        ...(transportTripId !== undefined ? { transportTripId } : {}),
       });
+    },
+    enabled: hasSearched,
+  });
 
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, sortField, sortDir, statusesKey, startDate, endDate, origin, destination, fetchCount]);
+  const totalPages = queryData && queryData.totalElements > 0
+    ? Math.ceil(queryData.totalElements / queryData.limit)
+    : 0;
+
+  // Apply filters and set s=1 flag — single atomic URL write to avoid race condition
+  // (calling setFiltersUrl then setSearchParams separately causes the second write
+  //  to overwrite the first because both snapshot the same stale URLSearchParams)
+  function setFilters(f: {
+    status?: BillStatus;
+    id?: string;
+    warehouseId?: number;
+    transportTripId?: string;
+  }) {
+    setSearchParams((prev) => {
+      // Use the config serializer to apply filter values, then add s=1
+      const next = billParamsConfig.serializeFilters(new URLSearchParams(prev.toString()), f);
+      next.set('page', '0');
+      next.set('s', '1');
+      return next;
+    }, { replace: true });
+  }
+
+  // Clear filters and remove the s flag so the prompt reappears — single write
+  function clearFilters() {
+    setSearchParams((prev) => {
+      const next = billParamsConfig.serializeFilters(new URLSearchParams(prev.toString()), {
+        status: undefined,
+        id: undefined,
+        warehouseId: undefined,
+        transportTripId: undefined,
+      });
+      next.delete('s');
+      next.set('page', '0');
+      return next;
+    }, { replace: true });
+  }
 
   return {
-    data,
+    data: queryData?.data ?? [],
     totalPages,
-    isLoading,
-    error,
+    isLoading: isFetching,
+    error: queryError as Error | null,
     refetch,
     page,
     sortField: sortField as BillSortField | undefined,
-    sortDir: sortDir as SortDir | undefined,
-    statuses,
-    startDate,
-    endDate,
-    origin,
-    destination,
+    status,
+    id,
+    warehouseId,
+    transportTripId,
+    hasSearched,
     setPage,
     setSort,
-    setFilters: setFiltersUrl,
+    setFilters,
+    clearFilters,
   };
 }

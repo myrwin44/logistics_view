@@ -1,5 +1,3 @@
-// src/App.tsx
-// Requirements: 1.2, 2.1, 14.3
 import { RouterProvider } from 'react-router-dom';
 import * as Toast from '@radix-ui/react-toast';
 import { QueryClientProvider } from '@tanstack/react-query';

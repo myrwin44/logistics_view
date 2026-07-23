@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 
 import { SkeletonChart } from '@/components/shared/SkeletonChart';
+import { formatWeight, formatWeightCompact } from '@/lib/format';
 import type { DashboardData } from '@/types/dashboard';
 
 const COLOR_PRIMARY = '#467235';
@@ -19,12 +20,6 @@ const COLOR_SECONDARY = '#FFBF00';
 interface LoadStatsPanelProps {
   data: DashboardData | null;
   isLoading: boolean;
-}
-
-function formatKg(value: number): string {
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M kg`;
-  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K kg`;
-  return `${value} kg`;
 }
 
 interface TooltipPayloadEntry {
@@ -46,7 +41,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
       <p className="font-medium text-[#111827] mb-1">{label}</p>
       {payload.map((entry) => (
         <p key={entry.name} style={{ color: entry.color }}>
-          {entry.name}: {formatKg(entry.value)}
+          {entry.name}: {formatWeight(entry.value)}
         </p>
       ))}
     </div>
@@ -107,7 +102,7 @@ export function TransportStatsPanel({ data, isLoading }: LoadStatsPanelProps) {
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={inChartData} margin={{ top: 8, right: 16, left: 0, bottom: 8 }} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" horizontal={false} />
-              <XAxis type="number" tickFormatter={(v) => formatKg(v)} tick={{ fontSize: 12, fill: '#6B7280' }} />
+              <XAxis type="number" tickFormatter={(v) => formatWeightCompact(v)} tick={{ fontSize: 12, fill: '#6B7280' }} />
               <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 11, fill: '#6B7280' }} />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,191,0,0.08)' }} />
               <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} iconType="square" />
@@ -128,7 +123,7 @@ export function TransportStatsPanel({ data, isLoading }: LoadStatsPanelProps) {
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={outChartData} margin={{ top: 8, right: 16, left: 0, bottom: 8 }} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" horizontal={false} />
-              <XAxis type="number" tickFormatter={(v) => formatKg(v)} tick={{ fontSize: 12, fill: '#6B7280' }} />
+              <XAxis type="number" tickFormatter={(v) => formatWeightCompact(v)} tick={{ fontSize: 12, fill: '#6B7280' }} />
               <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 11, fill: '#6B7280' }} />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,191,0,0.08)' }} />
               <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} iconType="square" />

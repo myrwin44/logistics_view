@@ -1,7 +1,7 @@
 import { cn } from '@/lib/cn';
 
 export interface PaginationProps {
-  currentPage: number;   // 1-indexed
+  currentPage: number;   // 0-indexed
   totalPages: number;
   onPageChange: (page: number) => void;
   className?: string;
@@ -20,8 +20,9 @@ export function Pagination({
   onPageChange,
   className,
 }: PaginationProps) {
-  const isFirst = currentPage <= 1;
-  const isLast = currentPage >= totalPages;
+  const isFirst = currentPage === 0;
+  const isLast = currentPage >= totalPages - 1;
+  const displayPage = currentPage + 1; // Convert to 1-indexed for display
 
   return (
     <nav
@@ -33,7 +34,7 @@ export function Pagination({
         type="button"
         aria-label="First page"
         disabled={isFirst}
-        onClick={() => onPageChange(1)}
+        onClick={() => onPageChange(0)}
         className={cn(pageButtonBase, pageButtonVariant)}
       >
         First
@@ -54,7 +55,7 @@ export function Pagination({
         aria-live="polite"
         className="px-3 py-1.5 text-sm text-ink-muted select-none"
       >
-        page {currentPage} of {totalPages}
+        page {displayPage} of {totalPages}
       </span>
 
       <button
@@ -71,7 +72,7 @@ export function Pagination({
         type="button"
         aria-label="Last page"
         disabled={isLast}
-        onClick={() => onPageChange(totalPages)}
+        onClick={() => onPageChange(totalPages - 1)}
         className={cn(pageButtonBase, pageButtonVariant)}
       >
         Last

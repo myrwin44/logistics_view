@@ -28,10 +28,10 @@ export default function Login() {
   function validate(): FieldErrors {
     const errors: FieldErrors = {};
     if (!username.trim()) {
-      errors.username = 'Username is required';
+      errors.username = 'Nhập vào username';
     }
     if (!password.trim()) {
-      errors.password = 'Password is required';
+      errors.password = 'Nhập vào password';
     }
     return errors;
   }
@@ -58,9 +58,9 @@ export default function Login() {
       const status = (err as { status?: number })?.status;
       if (status === 401) {
         // Non-specific failure message
-        setAuthError('Invalid username or password');
+        setAuthError('Thông tin đăng nhập không hợp lệ');
       } else {
-        setAuthError('An unexpected error occurred. Please try again.');
+        setAuthError('Lỗi không xác định. Thử lại.');
       }
     } finally {
       setIsLoading(false);
@@ -75,10 +75,10 @@ export default function Login() {
           {/* Heading */}
           <div className="mb-8 text-center">
             <h1 className="text-2xl font-semibold text-ink tracking-tight">
-              Logistics Ops
+              Logistics Opt
             </h1>
             <p className="mt-1 text-sm text-ink-muted">
-              Sign in to your account
+              Đăng nhập vào tài khoản của bạn
             </p>
           </div>
 
@@ -113,7 +113,7 @@ export default function Login() {
                 aria-describedby={fieldErrors.username ? 'username-error' : undefined}
                 aria-invalid={!!fieldErrors.username}
                 disabled={isLoading}
-                placeholder="Enter your username"
+                placeholder="Nhập vào username"
               />
               {fieldErrors.username && (
                 <p
@@ -145,7 +145,7 @@ export default function Login() {
                 aria-describedby={fieldErrors.password ? 'password-error' : undefined}
                 aria-invalid={!!fieldErrors.password}
                 disabled={isLoading}
-                placeholder="Enter your password"
+                placeholder="Nhập vào password"
               />
               {fieldErrors.password && (
                 <p
@@ -165,7 +165,7 @@ export default function Login() {
               size="lg"
               disabled={isLoading}
             >
-              {isLoading ? 'Signing in…' : 'Sign in'}
+              {isLoading ? 'Đang đăng nhập…' : 'Đăng nhập'}
             </Button>
           </form>
         </div>

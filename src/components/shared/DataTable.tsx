@@ -227,7 +227,7 @@ export function DataTable<TData>({
             </TableCell>
           </TableRow>
         ) : (
-          table.getRowModel().rows.map((row) => {
+          table.getRowModel().rows.map((row, index) => {
             const isClickable = !!onRowClick;
 
             function handleRowClick() {
@@ -250,6 +250,7 @@ export function DataTable<TData>({
                 onClick={isClickable ? handleRowClick : undefined}
                 onKeyDown={isClickable ? handleRowKeyDown : undefined}
                 className={cn(
+                  index % 2 === 0 ? 'bg-white' : 'bg-slate-100',
                   isClickable &&
                     'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary',
                 )}

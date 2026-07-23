@@ -11,7 +11,7 @@ import type { ScheduleRun, ScheduledTrip } from '@/types/schedule';
 // ---------------------------------------------------------------------------
 
 /** Dusty Rose. */
-const AI_PROVENANCE = '#A25772';
+const EXTERNAL_MODEL_PROVENANCE = '#A25772';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -41,7 +41,7 @@ function TripCard({ trip }: TripCardProps) {
   return (
     <article
       className="bg-white rounded-lg border border-[#E5E7EB] overflow-hidden"
-      style={{ borderLeft: `4px solid ${AI_PROVENANCE}` }}
+      style={{ borderLeft: `4px solid ${EXTERNAL_MODEL_PROVENANCE}` }}
       aria-label={`Trip for vehicle ${vehicle.name} (${vehicle.plateNumber})`}
     >
       {/* Card header — vehicle identity */}
@@ -49,7 +49,7 @@ function TripCard({ trip }: TripCardProps) {
         <Truck
           size={16}
           aria-hidden="true"
-          style={{ color: AI_PROVENANCE }}
+          style={{ color: EXTERNAL_MODEL_PROVENANCE }}
           className="shrink-0"
         />
         <div className="min-w-0">
@@ -82,7 +82,7 @@ function TripCard({ trip }: TripCardProps) {
             <li key={stop.sequence} className="flex items-center gap-2 text-xs text-[#4B5563]">
               <span
                 className="inline-flex items-center justify-center w-5 h-5 rounded-full text-white text-[10px] font-bold shrink-0"
-                style={{ backgroundColor: AI_PROVENANCE }}
+                style={{ backgroundColor: EXTERNAL_MODEL_PROVENANCE }}
                 aria-label={`Stop ${stop.sequence}`}
               >
                 {stop.sequence}
@@ -104,7 +104,7 @@ function ZeroTripsPanel() {
   return (
     <div
       className="rounded-lg border p-5 flex gap-3"
-      style={{ borderColor: AI_PROVENANCE, backgroundColor: '#FDF4F7' }}
+      style={{ borderColor: EXTERNAL_MODEL_PROVENANCE, backgroundColor: '#FDF4F7' }}
       role="status"
       aria-label="No routes generated"
     >
@@ -112,10 +112,10 @@ function ZeroTripsPanel() {
         size={20}
         aria-hidden="true"
         className="shrink-0 mt-0.5"
-        style={{ color: AI_PROVENANCE }}
+        style={{ color: EXTERNAL_MODEL_PROVENANCE }}
       />
       <div>
-        <p className="text-sm font-medium" style={{ color: AI_PROVENANCE }}>
+        <p className="text-sm font-medium" style={{ color: EXTERNAL_MODEL_PROVENANCE }}>
           No routes generated
         </p>
         <p className="text-sm text-[#6B7280] mt-1">
@@ -201,7 +201,7 @@ export function ScheduleResults({ scheduleRun, onRetry }: ScheduleResultsProps) 
       {/* Dusty Rose header strip */}
       <div
         className="flex items-center gap-2.5 px-4 py-3 rounded-t-lg"
-        style={{ backgroundColor: AI_PROVENANCE }}
+        style={{ backgroundColor: EXTERNAL_MODEL_PROVENANCE }}
         id="schedule-results-heading"
       >
         <Truck size={16} aria-hidden="true" className="text-white shrink-0" />

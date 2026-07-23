@@ -16,7 +16,14 @@ const DATE_FORMAT_MAP: Record<DateFormat, string> = {
  * @returns    A formatted date string matching the requested format.
  */
 export function formatDate(date: Date | string, fmt: DateFormat): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
+  let d: Date;
+  if (typeof date === 'string') {
+    // Handle API date format: "2026-04-30 03:32:25" -> replace space with T
+    const normalizedDate = date.replace(' ', 'T');
+    d = new Date(normalizedDate);
+  } else {
+    d = date;
+  }
   return format(d, DATE_FORMAT_MAP[fmt]);
 }
 

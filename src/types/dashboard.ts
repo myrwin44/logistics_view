@@ -8,6 +8,7 @@ export interface DashboardData {
   common: CommonStatistics;
   loads: LoadStatistics;
   warehouses: WarehouseStats[];
+  billStats: BillStatItem[];
 }
 
 export interface CommonStatistics {
@@ -48,4 +49,17 @@ export interface LoadStatItem {
 export interface LoadStatistics {
   inLoads: LoadStatItem[];
   outLoads: LoadStatItem[];
+}
+
+// ─── Bill / Service weight stats ─────────────────────────────────────────────
+
+export interface BillStatWarehouseItem {
+  warehouse: string;
+  totalWeight: number;
+}
+
+export interface BillStatItem {
+  service: string;
+  totalWeight: number;
+  warehouseStats: BillStatWarehouseItem[];
 }

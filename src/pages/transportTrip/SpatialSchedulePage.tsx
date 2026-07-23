@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { SpatialGanttChart } from './SpatialGanttChart';
 import { useUIStore } from '@/store/uiStore';
 import { useGanttSchedule } from '@/hooks/useGanttSchedule';
+import { CollapsibleFilterRibbon } from '@/components/shared/CollapsibleFilterRibbon';
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -45,26 +46,28 @@ export default function SpatialSchedulePage() {
       </header>
 
       {/* ── Plate filter + date range display (only local filter remaining) ── */}
-      <div className="bg-white rounded-lg border border-[#E5E7EB] px-4 py-3 flex flex-wrap items-end gap-3">
-        <div className="flex flex-col gap-1">
-          <Label htmlFor="sp-plate" className="text-xs font-medium text-slate-600">
-            Lọc biển số
-          </Label>
-          <Input
-            id="sp-plate"
-            type="text"
-            placeholder="Nhập biển số..."
-            value={filterPlate}
-            onChange={(e) => setFilterPlate(e.target.value)}
-            className="h-8 w-44 text-xs"
-          />
+      <CollapsibleFilterRibbon label="Bộ lọc lộ trình xe">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="sp-plate" className="text-xs font-medium text-slate-600">
+              Lọc biển số
+            </Label>
+            <Input
+              id="sp-plate"
+              type="text"
+              placeholder="Nhập biển số..."
+              value={filterPlate}
+              onChange={(e) => setFilterPlate(e.target.value)}
+              className="h-8 w-44 text-xs"
+            />
+          </div>
+          <div className="flex flex-col gap-1 self-end pb-0.5">
+            <span className="text-xs text-slate-400">
+              Khoảng thời gian: <strong className="text-slate-600">{startDate} → {endDate}</strong>
+            </span>
+          </div>
         </div>
-        <div className="flex flex-col gap-1 self-end pb-0.5">
-          <span className="text-xs text-slate-400">
-            Khoảng thời gian: <strong className="text-slate-600">{startDate} → {endDate}</strong>
-          </span>
-        </div>
-      </div>
+      </CollapsibleFilterRibbon>
 
       {/* ── Error indicator — show when fetch failed ── */}
       {error && (
@@ -157,10 +160,10 @@ export default function SpatialSchedulePage() {
             <div className="flex items-center flex-wrap gap-5 text-xs font-medium text-slate-600">
               <div className="flex items-center gap-2">
                 <svg width="28" height="10">
-                  <line x1="0" y1="5" x2="22" y2="5" stroke="#3B82F6" strokeWidth="2.5" markerEnd="url(#leg-s)" />
+                  <line x1="0" y1="5" x2="22" y2="5" stroke="#458B73" strokeWidth="2.5" markerEnd="url(#leg-s)" />
                   <defs>
                     <marker id="leg-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto">
-                      <path d="M0,0 L10,5 L0,10 Z" fill="#3B82F6" />
+                      <path d="M0,0 L10,5 L0,10 Z" fill="#458B73" />
                     </marker>
                   </defs>
                 </svg>
@@ -168,10 +171,10 @@ export default function SpatialSchedulePage() {
               </div>
               <div className="flex items-center gap-2">
                 <svg width="28" height="10">
-                  <line x1="0" y1="5" x2="22" y2="5" stroke="#F97316" strokeWidth="2.5" markerEnd="url(#leg-n)" />
+                  <line x1="0" y1="5" x2="22" y2="5" stroke="#FF9760" strokeWidth="2.5" markerEnd="url(#leg-n)" />
                   <defs>
                     <marker id="leg-n" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto">
-                      <path d="M0,0 L10,5 L0,10 Z" fill="#F97316" />
+                      <path d="M0,0 L10,5 L0,10 Z" fill="#FF9760" />
                     </marker>
                   </defs>
                 </svg>

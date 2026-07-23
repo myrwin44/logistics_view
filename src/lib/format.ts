@@ -53,3 +53,36 @@ export function formatMinutes(mins: number): string {
 export function stripWarehousePrefix(name: string): string {
   return name.replace(/^Kho\s+/i, '').trim();
 }
+
+// ─── Weight formatting ────────────────────────────────────────────────────────
+
+/**
+ * Formats a weight value (in kg) with smart unit selection:
+ *  - < 1000 kg  → "X kg"       (e.g. "850 kg")
+ *  - ≥ 1000 kg  → "X.XX tấn"   (e.g. "1.25 tấn", "4 482.79 tấn")
+ *
+ * The tấn value is always rounded to 2 decimal places.
+ * Separators follow vi-VN locale (dots for thousands, comma for decimal).
+ */
+export function formatWeight(kg: number): string {
+  if (kg == null || isNaN(kg)) return '—';
+  if (kg < 1000) {
+    return `${kg.toLocaleString('vi-VN')} kg`;
+  }
+  const ton = kg / 1000;
+  return `${ton.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} tấn`;
+}
+
+/**
+ * Compact weight for chart axes / tight spaces — no locale separator:
+ *  - < 1000 kg  → "850 kg"
+ *  - ≥ 1000 kg  → "1.25 tấn"
+ * Absolute value is used so negative diverging-chart values display correctly.
+ */
+export function formatWeightCompact(kg: number): string {
+  if (kg == null || isNaN(kg)) return '—';
+  const abs = Math.abs(kg);
+  if (abs < 1000) return `${abs} kg`;
+  const ton = abs / 1000;
+  return `${ton.toFixed(2)} tấn`;
+}

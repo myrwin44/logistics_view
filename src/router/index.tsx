@@ -21,7 +21,10 @@ const Settings = lazy(() => import('../pages/Settings'));
  * time by passing the route params from `useMatches()`.
  */
 export interface RouteHandle {
-  crumb?: (params: Record<string, string | undefined>) => Array<{ label: string; href?: string }>;
+  crumb?: (
+    params: Record<string, string | undefined>,
+    state?: unknown,
+  ) => Array<{ label: string; href?: string }>;
 }
 
 export const router = createBrowserRouter([
@@ -83,10 +86,13 @@ export const router = createBrowserRouter([
             element: <Suspense fallback={null}><BillOfLadingDetail /></Suspense>,
             // Req 10.6: Breadcrumb "Bills of Lading / [Bill ID]"
             handle: {
-              crumb: (params: Record<string, string | undefined>) => [
-                { label: 'Bills of Lading', href: '/bills' },
-                { label: params.id ? `Bill ${params.id}` : 'Bill Detail' },
-              ],
+              crumb: (params: Record<string, string | undefined>, state?: unknown) => {
+                const billsSearch = (state as { billsSearch?: string } | null)?.billsSearch ?? '';
+                return [
+                  { label: 'Bills of Lading', href: `/bills${billsSearch}` },
+                  { label: params.id ? `Bill ${params.id}` : 'Bill Detail' },
+                ];
+              },
             } satisfies RouteHandle,
           },
           { path: '/settings', element: <Suspense fallback={null}><Settings /></Suspense> },

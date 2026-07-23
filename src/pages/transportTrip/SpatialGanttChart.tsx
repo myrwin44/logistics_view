@@ -4,8 +4,11 @@
  * - Trục Y: Nhóm theo biển số xe; mỗi xe N hàng = N chuyến
  */
 import * as React from 'react';
-import { Truck } from 'lucide-react';
 import type { VehicleSchedule, IdleTripSchedule, MovingTripSchedule, TripSchedule } from '@/types/schedule';
+import {
+  GanttTooltipCard,
+  type GanttTipState,
+} from '@/components/shared/GanttTooltip';
 
 // ─── Warehouse list ───────────────────────────────────────────────────────────
 export const WAREHOUSES = [
@@ -16,14 +19,17 @@ export const WAREHOUSES = [
 ];
 
 const WAREHOUSE_ALIAS: Record<string, string> = {
-  'Kho Văn Giang':'Văn Giang','Kho Vinfast HY':'Vinfast HY','Kho Hải Phòng':'Hải Phòng',
+  'Kho Văn Giang':'Văn Giang','Kho Vinfast HY':'Vinfast HY','Kho dự án Vinfast Hưng Yên':'Vinfast HY','Kho Hải Phòng':'Hải Phòng',
   'Kho Thanh Hóa':'Thanh Hóa','Kho Nghệ An':'Nghệ An','Kho Quảng Bình':'Q.Bình',
   'Kho Quảng Trị':'Q.Trị','Kho Huế':'Huế','Kho ĐB-Đà Nẵng':'Đà Nẵng',
   'Kho Đà Nẵng':'Đà Nẵng','Kho Quảng Ngãi':'Q.Ngãi','Kho Kon Tum':'Kon Tum',
-  'Kho Gia Lai':'Gia Lai','Kho Bình Định':'B.Định','Kho Bộ Phú Yên':'Phú Yên',
+  'Kho Gia Lai':'Gia Lai','Kho Hàng Gia Lai':'Gia Lai','Kho Bình Định':'B.Định','Kho Bộ Phú Yên':'Phú Yên',
   'Kho Phú Yên':'Phú Yên','Kho B.M.T':'B.M.T','Kho Buôn Ma Thuột':'B.M.T',
   'Kho hàng Buôn Ma Thuột':'B.M.T','Kho Diên Khánh':'Diên Khánh',
   'Kho Ninh Thuận':'N.Thuận','Kho Bình Thuận':'B.Thuận','Kho Sóng Thần':'Sóng Thần',
+  'Kho Đắc Nông':'Đắc Nông','Kho Nam Định':'Nam Định','Kho Tam Kỳ':'Tam Kỳ',
+  'Kho Từ Sơn - Bắc Ninh':'T.Sơn','Kho 18A Cộng Hòa':'18A C.Hòa',
+  'Bưu cục Hà Nam':'BC Hà Nam','Kho hàng ICD Mỹ đình':'ICD Mỹ Đình',
 };
 
 function normalizeWh(name: string): string {
@@ -35,13 +41,13 @@ function whIndex(name: string): number {
 }
 
 // ─── Layout ───────────────────────────────────────────────────────────────────
-const COL_W  = 68;   // px per warehouse column
+const COL_W  = 66;   // px per warehouse column
 const ROW_H  = 26;   // px per trip row
-const LEFT_W = 152;  // px left label panel
+const LEFT_W = 136;  // px left label panel
 const HDR_H  = 48;   // px header height
 
-const COLOR_S = '#3B82F6';
-const COLOR_N = '#F97316';
+const COLOR_S = '#458B73';
+const COLOR_N = '#FF9760';
 const COLOR_Y_FILL = '#FEF08A';
 const COLOR_Y_STR  = '#EAB308';
 const COLOR_R_STR  = '#EF4444';
@@ -50,10 +56,7 @@ const COLOR_R_STR  = '#EF4444';
 interface TripRow { tripId: string; idle: IdleTripSchedule[]; moving: MovingTripSchedule[]; }
 interface VehicleGroup { licensePlate: string; vehicleType: string; trips: TripRow[]; }
 
-type TipData =
-  | { kind: 'idle';   data: IdleTripSchedule   & { plate: string; vType: string; tripId: string }; svgX: number; svgY: number }
-  | { kind: 'moving'; data: MovingTripSchedule & { plate: string; vType: string; tripId: string }; svgX: number; svgY: number }
-  | null;
+type TipData = GanttTipState | null;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function buildGroups(vehicles: VehicleSchedule[]): VehicleGroup[] {
@@ -70,100 +73,6 @@ function buildGroups(vehicles: VehicleSchedule[]): VehicleGroup[] {
       return ta - tb;
     }),
   })).filter(g => g.trips.length > 0);
-}
-
-function fmtDT(iso: string) {
-  try {
-    const d = new Date(iso);
-    if (isNaN(d.getTime())) return iso;
-    const p = (n: number) => String(n).padStart(2, '0');
-    return `${p(d.getDate())}/${p(d.getMonth()+1)} ${p(d.getHours())}:${p(d.getMinutes())}`;
-  } catch { return iso; }
-}
-
-// ─── Tooltip components ───────────────────────────────────────────────────────
-function TooltipContainer({ info, el }: { info: TipData; el: HTMLDivElement | null }) {
-  if (!info || !el) return null;
-  const W = 248;
-  const rect = el.getBoundingClientRect();
-  const absX = info.svgX + LEFT_W - el.scrollLeft;
-  const absY = info.svgY + HDR_H  - el.scrollTop;
-  let left = absX - W / 2;
-  if (left + W > rect.width - 8) left = rect.width - W - 8;
-  if (left < 8) left = 8;
-  return (
-    <div className="absolute z-50 pointer-events-none" style={{ left, top: absY - 10, transform: 'translateY(-100%)' }}>
-      {info.kind === 'idle'
-        ? <IdleTip   data={info.data} />
-        : <MovingTip data={info.data} />}
-    </div>
-  );
-}
-
-function Row({ k, v }: { k: string; v: string | number }) {
-  return (
-    <tr>
-      <td className="pr-2 py-[1px] text-slate-400 whitespace-nowrap">{k}</td>
-      <td className="text-right text-white font-medium">{v}</td>
-    </tr>
-  );
-}
-
-function IdleTip({ data: d }: { data: IdleTripSchedule & { plate: string; vType: string; tripId: string } }) {
-  const has = d.totalUploadBill > 0 || d.totalDownloadBill > 0;
-  return (
-    <div className="bg-[#1a1a2e] text-white rounded-xl shadow-2xl p-3 w-[248px] text-[11px]">
-      <div className="flex items-center gap-2 mb-2 pb-1.5 border-b border-white/15">
-        <span className="w-2.5 h-2.5 rounded-full border-2 shrink-0"
-          style={{ background: has ? COLOR_Y_FILL : '#fff', borderColor: has ? COLOR_Y_STR : COLOR_R_STR }} />
-        <span className="font-semibold text-[12px]">{normalizeWh(d.warehouseName)}</span>
-      </div>
-      <table className="w-full border-collapse">
-        <tbody>
-          <Row k="Xe" v={d.plate} />
-          <Row k="Mã chuyến" v={`T_${d.tripId.toString().slice(-4)}`} />
-          <Row k="Loại xe" v={d.vType} />
-          <Row k="Checkin" v={fmtDT(d.checkIn)} />
-          <Row k="Checkout" v={fmtDT(d.checkOut)} />
-        </tbody>
-      </table>
-      <div className="mt-1.5 pt-1.5 border-t border-white/15 space-y-0.5">
-        <div className="flex justify-between">
-          <span className="text-slate-400">↑ Lên</span>
-          <span className="font-medium">{d.totalUploadBill} bills · {d.totalUploadWeight.toLocaleString('vi-VN')} kg</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-slate-400">↓ Xuống</span>
-          <span className="font-medium">{d.totalDownloadBill} bills · {d.totalDownloadWeight.toLocaleString('vi-VN')} kg</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function MovingTip({ data: d }: { data: MovingTripSchedule & { plate: string; vType: string; tripId: string } }) {
-  const i1 = whIndex(d.originWarehouse), i2 = whIndex(d.destinationWarehouse);
-  const south = i1 < i2;
-  const h = Math.floor(d.totalTime / 60), m = d.totalTime % 60;
-  return (
-    <div className="bg-[#1a1a2e] text-white rounded-xl shadow-2xl p-3 w-[248px] text-[11px]">
-      <div className="flex items-center gap-2 mb-2 pb-1.5 border-b border-white/15">
-        <Truck size={12} style={{ color: south ? COLOR_S : COLOR_N }} />
-        <span className="font-semibold text-[12px]">{south ? '↓ Vào Nam' : '↑ Ra Bắc'}</span>
-      </div>
-      <table className="w-full border-collapse">
-        <tbody>
-          <Row k="Xe" v={d.plate} />
-          <Row k="Mã chuyến" v={`T_${d.tripId.toString().slice(-4)}`} />
-          <Row k="Từ kho" v={normalizeWh(d.originWarehouse)} />
-          <Row k="Đến kho" v={normalizeWh(d.destinationWarehouse)} />
-          <Row k="Khởi hành" v={fmtDT(d.departure)} />
-          <Row k="Đến nơi"   v={fmtDT(d.arrival)} />
-          <Row k="Thời gian" v={`${h}h ${m}ph`} />
-        </tbody>
-      </table>
-    </div>
-  );
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -211,12 +120,15 @@ export function SpatialGanttChart({ vehicles }: Props) {
         </div>
         <div ref={hdrRef} className="flex-1 overflow-hidden" style={{ height: HDR_H }}>
           <div className="flex h-full items-end" style={{ width: SVG_W }}>
-            {WAREHOUSES.map(wh => (
-              <div key={wh} className="flex flex-col items-center justify-end pb-1 gap-0.5 shrink-0" style={{ width: COL_W }}>
-                <span className="text-[9px] font-semibold text-slate-700 leading-tight text-center">{wh}</span>
-                <div className="w-px h-1.5 bg-slate-300" />
-              </div>
-            ))}
+            {WAREHOUSES.map(wh => {
+              const isHighlighted = ['Văn Giang', 'Đà Nẵng', 'Sóng Thần'].includes(wh);
+              return (
+                <div key={wh} className="flex flex-col items-center justify-end pb-1 gap-0.5 shrink-0" style={{ width: COL_W }}>
+                  <span className={`leading-tight text-center ${isHighlighted ? 'text-[11px] font-bold text-slate-900' : 'text-[9px] font-semibold text-slate-700'}`}>{wh}</span>
+                  <div className={`w-px ${isHighlighted ? 'h-2 bg-slate-400' : 'h-1.5 bg-slate-300'}`} />
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -232,12 +144,12 @@ export function SpatialGanttChart({ vehicles }: Props) {
                 style={{ height: ROW_H }}>
                 <span className="font-bold text-[10px] text-slate-800 tracking-tight truncate">{item.group.licensePlate}</span>
                 <span className="text-[8px] bg-purple-100 text-purple-700 px-1 py-px rounded font-bold uppercase shrink-0">
-                  {item.group.vehicleType.replace(/[^\d]+(\d+).*/,'C$1').slice(0,3)}
+                  {item.group.vehicleType.replace(/[^\d]+(\d+).*/,'V$1').slice(0,3)}
                 </span>
                 <span className="text-[8px] text-slate-400 ml-auto shrink-0">{item.group.trips.length}</span>
               </div>
             );
-            const label = `T_${item.trip.tripId.toString().slice(-4)}`;
+            const label = item.trip.tripId.toString();
             return (
               <div key={`t-${item.trip.tripId}`}
                 className="flex items-center pl-4 pr-2 border-b"
@@ -276,20 +188,53 @@ export function SpatialGanttChart({ vehicles }: Props) {
               if (item.kind === 'vehicle') return null;
               const { trip, rowIdx, group } = item;
               const cy = rowY(rowIdx);
+              
+              // Collect all warehouse indices used by this trip
+              const usedWarehouseIndices = new Set<number>();
+              trip.moving.forEach(m => {
+                const xi = whIndex(m.originWarehouse), xj = whIndex(m.destinationWarehouse);
+                if (xi >= 0) usedWarehouseIndices.add(xi);
+                if (xj >= 0) usedWarehouseIndices.add(xj);
+              });
+              trip.idle.forEach(idl => {
+                const xi = whIndex(idl.warehouseName);
+                if (xi >= 0) usedWarehouseIndices.add(xi);
+              });
+              
               return (
                 <g key={`trip-${trip.tripId}`}>
                   {trip.moving.map((m, mi) => {
                     const xi = whIndex(m.originWarehouse), xj = whIndex(m.destinationWarehouse);
                     if (xi < 0 || xj < 0) return null;
                     const south = xi < xj;
+                    const lineColor = south ? COLOR_S : COLOR_N;
+                    // Find the idle record at the destination warehouse (for end-point tooltip)
+                    const destIdleData = trip.idle.find(
+                      idl => whIndex(idl.warehouseName) === xj
+                    );
                     return (
-                      <line key={mi}
-                        x1={colX(xi)} y1={cy} x2={colX(xj)} y2={cy}
-                        stroke={south ? COLOR_S : COLOR_N} strokeWidth={2}
-                        markerEnd={south ? 'url(#as)' : 'url(#an)'}
-                        style={{ cursor: 'pointer' }}
-                        onMouseEnter={() => setTip({ kind: 'moving', data: { ...m, plate: group.licensePlate, vType: group.vehicleType, tripId: trip.tripId }, svgX: (colX(xi)+colX(xj))/2, svgY: cy })}
-                      />
+                      <g key={mi}>
+                        <line
+                          x1={colX(xi)} y1={cy} x2={colX(xj)} y2={cy}
+                          stroke={lineColor} strokeWidth={3}
+                          markerEnd={south ? 'url(#as)' : 'url(#an)'}
+                          style={{ cursor: 'pointer' }}
+                          onMouseEnter={(e) => setTip({ kind: 'moving', data: m, vx: e.clientX, vy: e.clientY })}
+                          onMouseLeave={() => setTip(null)}
+                        />
+                        {/* End-point circle at destination — interactive if idle data exists */}
+                        <g
+                          style={{ cursor: destIdleData ? 'pointer' : 'default' }}
+                          onMouseEnter={destIdleData
+                            ? (e) => setTip({ kind: 'idle', data: destIdleData, vx: e.clientX, vy: e.clientY })
+                            : undefined}
+                          onMouseLeave={destIdleData ? () => setTip(null) : undefined}
+                        >
+                          <circle cx={colX(xj)} cy={cy} r={5.5} fill={lineColor} />
+                          <circle cx={colX(xj)} cy={cy} r={3}   fill="#fff" />
+                          <circle cx={colX(xj)} cy={cy} r={1.5} fill={lineColor} />
+                        </g>
+                      </g>
                     );
                   })}
                   {trip.idle.map((idl, ii) => {
@@ -305,16 +250,34 @@ export function SpatialGanttChart({ vehicles }: Props) {
                       const iN = whIndex(trip.idle[trip.idle.length - 1].warehouseName);
                       epColor = i0 <= iN ? COLOR_S : COLOR_N;
                     }
+                    // Only draw idle circles if this warehouse is NOT an endpoint of a moving segment
+                    // to avoid overlapping with arrow markers (except for start point which should always be visible)
+                    const isMovingEndpoint = trip.moving.some(m => {
+                      const oi = whIndex(m.originWarehouse), di = whIndex(m.destinationWarehouse);
+                      return oi === xi || di === xi;
+                    });
+                    // Skip if endpoint AND moving endpoint, BUT always draw the first point (start)
+                    if (endpoint && isMovingEndpoint && !isFirst) return null;
                     return (
                       <g key={ii} style={{ cursor: 'pointer' }}
-                        onMouseEnter={() => setTip({ kind: 'idle', data: { ...idl, plate: group.licensePlate, vType: group.vehicleType, tripId: trip.tripId }, svgX: cx, svgY: cy })}>
-                        {endpoint ? (
+                        onMouseEnter={(e) => setTip({ kind: 'idle', data: idl, vx: e.clientX, vy: e.clientY })}
+                        onMouseLeave={() => setTip(null)}>
+                        {isFirst ? (
+                          // Start point: distinctive style with dot inside
+                          <>
+                            <circle cx={cx} cy={cy} r={6} fill={epColor} />
+                            <circle cx={cx} cy={cy} r={3.5} fill="#fff" />
+                            <circle cx={cx} cy={cy} r={1.8} fill={epColor} />
+                          </>
+                        ) : endpoint ? (
+                          // Other endpoints (end point): standard endpoint style
                           <>
                             <circle cx={cx} cy={cy} r={5.5} fill={epColor} />
                             <circle cx={cx} cy={cy} r={3}   fill="#fff" />
                             <circle cx={cx} cy={cy} r={1.5} fill={epColor} />
                           </>
                         ) : (
+                          // Intermediate idle points
                           <circle cx={cx} cy={cy} r={4}
                             fill={has ? COLOR_Y_FILL : '#fff'}
                             stroke={has ? COLOR_Y_STR : COLOR_R_STR}
@@ -329,7 +292,9 @@ export function SpatialGanttChart({ vehicles }: Props) {
           </svg>
         </div>
 
-        <TooltipContainer info={tip} el={bodyRef.current} />
+        {tip && (
+          <GanttTooltipCard tip={tip} onClose={() => setTip(null)} />
+        )}
       </div>
     </div>
   );

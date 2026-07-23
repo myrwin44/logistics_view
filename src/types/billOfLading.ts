@@ -1,14 +1,14 @@
-import type { SortDir } from './transportTrip';
 
-export type BillStatus = 'Unscheduled' | 'Scheduled' | 'In Transit' | 'Delivered';
+export type BillStatus = 'ESTIMATED' | 'MODIFIED' | 'ACTUAL';
 
 export interface BillListItem {
   id: string;
   originWarehouse: string;
   destinationWarehouse: string;
-  weightKg: number;
-  status: BillStatus;
-  scheduledDate: string | null; // null if Unscheduled
+  transportTripId: string;
+  uploadAt: string;
+  downloadAt: string;
+  actualWeight: number;
 }
 
 export interface BillJourneyStop {
@@ -19,21 +19,50 @@ export interface BillJourneyStop {
   action: 'load' | 'unload';
 }
 
-export interface ShipmentBill extends BillListItem {
-  createdDate: string;
-  journey: BillJourneyStop[];
+export interface ShipmentBill {
+  billId: number;
+  VDtype: string;
+  service: string;
+  originWarehouse: string;
+  destinationWarehouse: string;
+  actualWeight: number;
+  uploadAt: string;
+  downloadAt: string;
 }
 
-export type BillSortField = 'id' | 'weightKg' | 'status' | 'scheduledDate';
+/** Overview block returned by the new detail API */
+export interface BillOverview {
+  billId: number;
+  VDtype: string;
+  service: string;
+  actualWeight: number;
+}
+
+/** A single leg in the shipment journey */
+export interface BillTrackLog {
+  transportTripId: number;
+  licensePlate: string;
+  vehicleType: string;
+  originWarehouse: string;
+  destinationWarehouse: string;
+  uploadAt: string;
+  downloadAt: string;
+}
+
+/** Full detail response (new API shape) */
+export interface ShipmentBillDetail {
+  billOverview: BillOverview;
+  billTrackLogs: BillTrackLog[];
+}
+
+export type BillSortField = 'id' | 'actualWeight';
 
 export interface BillQueryParams {
   page: number;
-  pageSize: number;
-  sortField?: BillSortField;
-  sortDir?: SortDir;
-  status?: BillStatus[];
-  startDate?: string;
-  endDate?: string;
-  originWarehouse?: string;
-  destinationWarehouse?: string;
+  size: number;
+  sort?: string;
+  status?: BillStatus;
+  id?: string;
+  warehouseId?: number;
+  transportTripId?: string;
 }

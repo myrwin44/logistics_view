@@ -1,29 +1,15 @@
 import * as React from 'react';
-import { useMatches, Link } from 'react-router-dom';
-import {
-  ChevronDown,
-  LayoutDashboard,
-  CalendarRange,
-  Truck,
-  FileText,
-  Settings2,
-  type LucideIcon,
-} from 'lucide-react';
+import { useMatches, useLocation } from 'react-router-dom';
+import { RefreshCw } from 'lucide-react';
+import { useQueryClient, useIsFetching } from '@tanstack/react-query';
 import Breadcrumb from './Breadcrumb';
+import { NavSearchBar } from './NavSearchBar';
 import { cn } from '@/lib/cn';
 import type { RouteHandle } from '@/router';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { useUIStore } from '@/store/uiStore';
 import { useAuth } from '@/contexts/AuthContext';
 import { DateRangePicker } from '@/components/shared/DateRangePicker';
-import {DateRange} from "react-day-picker";
+import { DateRange } from "react-day-picker";
 import { format } from 'date-fns';
 
 // ---------------------------------------------------------------------------
@@ -39,121 +25,70 @@ const ROUTE_LABELS: Record<string, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// Center navigation menu config
+// Route → query key map (for invalidation on refresh)
 // ---------------------------------------------------------------------------
 
-interface NavMenuEntry {
-  label: string;
-  href: string;
-  icon: LucideIcon;
-}
-
-interface NavMenuSection {
-  /** Text shown in the separator label inside the dropdown */
-  sectionLabel?: string;
-  entries: NavMenuEntry[];
-}
-
-interface NavMenuGroup {
-  trigger: string;
-  sections: NavMenuSection[];
-}
-
-const NAV_MENU: NavMenuGroup[] = [
-  {
-    trigger: 'Vận hành',
-    sections: [
-      {
-        entries: [
-          { label: 'Lập lịch', href: '/schedule', icon: CalendarRange },
-          { label: 'Tuyến xe', href: '/transport-trips', icon: Truck },
-          { label: 'Vận đơn', href: '/bills', icon: FileText },
-        ],
-      },
-    ],
-  },
-  {
-    trigger: 'Báo cáo',
-    sections: [
-      {
-        entries: [
-          { label: 'Bảng điều khiển', href: '/', icon: LayoutDashboard },
-        ],
-      },
-    ],
-  },
-  {
-    trigger: 'Hệ thống',
-    sections: [
-      {
-        entries: [
-          { label: 'Cài đặt', href: '/settings', icon: Settings2 },
-        ],
-      },
-    ],
-  },
-];
+const ROUTE_QUERY_KEYS: Record<string, unknown[][]> = {
+  '/':                              [['dashboard']],
+  '/schedule':                      [['schedule']],
+  '/schedule-view':                 [['gantt-schedule']],
+  '/transport-trips':               [['transport-trips']],
+  '/transport-trips/spatial-schedule': [['transport-trips']],
+  '/bills':                         [['bills']],
+};
 
 // ---------------------------------------------------------------------------
-// CenterNavMenu
+// GlobalRefreshButton — invalidates TanStack Query cache for current route
 // ---------------------------------------------------------------------------
 
-function CenterNavMenu() {
+function GlobalRefreshButton() {
+  const location = useLocation();
+  const queryClient = useQueryClient();
+  const [spinning, setSpinning] = React.useState(false);
+
+  async function handleRefresh() {
+    if (spinning) return;
+    setSpinning(true);
+
+    // Derive base path (strip dynamic segments like /transport-trips/123)
+    const basePath = '/' + location.pathname.split('/').slice(1, 3).join('/');
+    const keys = ROUTE_QUERY_KEYS[basePath] ?? ROUTE_QUERY_KEYS[location.pathname];
+
+    if (keys) {
+      await Promise.all(
+        keys.map((key) => queryClient.invalidateQueries({ queryKey: key })),
+      );
+    } else {
+      // Fallback: invalidate everything
+      await queryClient.invalidateQueries();
+    }
+
+    // Keep spinner visible for at least 600ms so it doesn't flicker
+    setTimeout(() => setSpinning(false), 600);
+  }
+
   return (
-    <nav
-      aria-label="Global navigation"
-      className="flex items-center gap-0.5"
+    <button
+      type="button"
+      aria-label="Tải lại dữ liệu trang hiện tại"
+      onClick={handleRefresh}
+      disabled={spinning}
+      className={cn(
+        'flex items-center justify-center w-9 h-9 rounded-lg border border-[#E5E7EB]',
+        'bg-white text-[#6B7280] transition-colors duration-150',
+        'hover:border-[#D1D5DB] hover:text-[#374151] hover:bg-[#F9FAFB]',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFBF00]/50',
+        'disabled:opacity-60 disabled:cursor-not-allowed',
+      )}
     >
-      {NAV_MENU.map((group) => (
-        <DropdownMenu key={group.trigger}>
-          <DropdownMenuTrigger
-            className={cn(
-              'flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium',
-              'text-gray-700 transition-colors duration-150',
-              'hover:bg-primary-light hover:text-brand-dark',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
-              'data-[state=open]:bg-primary-light data-[state=open]:text-brand-dark',
-            )}
-          >
-            {group.trigger}
-            <ChevronDown
-              size={12}
-              aria-hidden="true"
-              className="text-gray-400 transition-transform duration-150 [[data-state=open]_&]:rotate-180"
-            />
-          </DropdownMenuTrigger>
-
-          <DropdownMenuContent align="center" sideOffset={6} className="min-w-44">
-            {group.sections.map((section, si) => (
-              <React.Fragment key={si}>
-                {si > 0 && <DropdownMenuSeparator />}
-                {section.sectionLabel && (
-                  <DropdownMenuLabel>{section.sectionLabel}</DropdownMenuLabel>
-                )}
-                {section.entries.map((entry) => (
-                  <DropdownMenuItem key={entry.href} asChild className="cursor-pointer gap-2">
-                    <Link to={entry.href}>
-                      <entry.icon
-                        size={14}
-                        className="text-gray-400"
-                        aria-hidden="true"
-                      />
-                      {entry.label}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </React.Fragment>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ))}
-    </nav>
+      <RefreshCw
+        size={14}
+        aria-hidden="true"
+        className={spinning ? 'animate-spin' : ''}
+      />
+    </button>
   );
 }
-
-// ---------------------------------------------------------------------------
-// GlobalDateRangePicker
-// ---------------------------------------------------------------------------
 
 /**
  * Parses a YYYY-MM-DD string to a local-timezone Date (midnight local time).
@@ -179,6 +114,14 @@ function parseDateString(dateStr: string): Date {
 export function GlobalDateRangePicker() {
   const { globalDateRange, setGlobalDateRange } = useUIStore();
   const { isAuthenticated } = useAuth();
+  const location = useLocation();
+
+  // Track whether any query related to the current route is fetching
+  // so we can show the spinner on the apply button
+  const routeQueryKey = ROUTE_QUERY_KEYS[location.pathname]?.[0]?.[0] as string | undefined;
+  const isFetching = useIsFetching(
+    routeQueryKey ? { queryKey: [routeQueryKey] } : undefined,
+  ) > 0;
 
   const [pickerDateRange, setPickerDateRange] = React.useState<DateRange | undefined>(() => ({
     from: parseDateString(globalDateRange.startDate),
@@ -196,10 +139,9 @@ export function GlobalDateRangePicker() {
   if (!isAuthenticated) return null;
 
   function handleApply() {
-    // Guard: do not propagate an invalid range to the store
     if (!pickerDateRange?.from || !pickerDateRange?.to) return;
     if (pickerDateRange.to < pickerDateRange.from) return;
-    
+
     setGlobalDateRange({
       startDate: format(pickerDateRange.from, 'yyyy-MM-dd'),
       endDate: format(pickerDateRange.to, 'yyyy-MM-dd'),
@@ -212,6 +154,7 @@ export function GlobalDateRangePicker() {
       endDate={pickerDateRange?.to}
       onDateChange={setPickerDateRange}
       onApply={handleApply}
+      isLoading={isFetching}
       label="Khoảng thời gian"
     />
   );
@@ -223,6 +166,7 @@ export function GlobalDateRangePicker() {
 
 export default function TopBar() {
   const matches = useMatches();
+  const location = useLocation();
 
   // Check if any matched route supplies breadcrumb items via handle.crumb
   const handleMatch = [...matches].reverse().find(
@@ -236,6 +180,7 @@ export default function TopBar() {
     const handle = handleMatch.handle as RouteHandle;
     breadcrumbItems = handle.crumb!(
       handleMatch.params as Record<string, string | undefined>,
+      location.state,
     );
   } else {
     // ── FIX: only use the single leaf (most-specific) matching route ──────────
@@ -255,7 +200,7 @@ export default function TopBar() {
     <header
       className={cn(
         'flex h-14 shrink-0 items-center justify-between',
-        'border-b border-border bg-white px-4 overflow-hidden',
+        'border-b border-border bg-white px-4',
       )}
     >
       {/* Left: breadcrumb — fixed width to help center the nav menu */}
@@ -265,14 +210,15 @@ export default function TopBar() {
         )}
       </div>
 
-      {/* Center: global navigation menu */}
+      {/* Center: autocomplete search bar */}
       <div className="flex items-center justify-center shrink-0">
-        <CenterNavMenu />
+        <NavSearchBar />
       </div>
 
-      {/* Right: global date range picker — mirrors left flex-1 so nav stays centered */}
-      <div className="flex items-center justify-end flex-1">
+      {/* Right: date range picker + refresh button */}
+      <div className="flex items-center justify-end gap-2 flex-1">
         <GlobalDateRangePicker />
+        <GlobalRefreshButton />
       </div>
     </header>
   );

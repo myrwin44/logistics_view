@@ -14,15 +14,17 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { TableToolbar } from '@/components/shared/TableToolbar';
 import { LoadingState } from '@/components/shared/LoadingState';
 import { ErrorState } from '@/components/shared/ErrorState';
+import { CollapsibleFilterRibbon } from '@/components/shared/CollapsibleFilterRibbon';
 import { formatDateTimeShort, stripWarehousePrefix } from '@/lib/format';
 
-function TripRow({ trip, isSelected, onClick }: {
-  trip: TripOverview; isSelected: boolean; onClick: () => void;
+function TripRow({ trip, isSelected, onClick, index }: {
+  trip: TripOverview; isSelected: boolean; onClick: () => void; index: number;
 }) {
   return (
     <tr onClick={onClick} className={cn(
       'cursor-pointer border-b border-slate-100 transition-colors',
-      isSelected ? 'bg-[#EEF5FF] hover:bg-[#E4EFFF]' : 'hover:bg-slate-50',
+      index % 2 === 0 ? 'bg-white' : 'bg-slate-100',
+      isSelected ? 'bg-[#EEF5FF] hover:bg-[#E4EFFF]' : 'hover:bg-slate-150',
     )}>
       <td className="py-2 pl-4 pr-2">
         <span className="text-xs font-semibold text-slate-800">{trip.licensePlate}</span>
@@ -40,7 +42,7 @@ function TripRow({ trip, isSelected, onClick }: {
       <td className="py-2 px-2">
         <span className="text-xs tabular-nums text-slate-600">{formatDateTimeShort(trip.departure)}</span>
       </td>
-      <td className="py-2 px-2 text-right">
+      <td className="py-2 px-2 text-center">
         <span className="text-xs tabular-nums font-medium text-slate-700">{trip.noStops}</span>
       </td>
       <td className="py-2 pl-2 pr-4 text-right">
@@ -83,23 +85,25 @@ export default function AllTrips() {
     <div className="flex flex-col gap-4">
       <PageHeader icon={Truck} title="Thông tin tuyến" description="Danh sách chuyến xe theo khoảng thời gian" />
 
-      <div className="flex items-center gap-2">
-        <label htmlFor="at-plate" className="flex items-center gap-1 text-xs font-medium text-slate-600 shrink-0">
-          <ListFilter size={11} /> Lọc biển số
-        </label>
-        <div className="relative">
-          <Search size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
-          <Input id="at-plate" type="text" placeholder="Biển số..."
-            value={filterPlate} onChange={e => setFilterPlate(e.target.value)}
-            className="h-8 text-xs w-40 pl-6" />
+      <CollapsibleFilterRibbon label="Lọc biển số">
+        <div className="flex items-center gap-2">
+          <label htmlFor="at-plate" className="flex items-center gap-1 text-xs font-medium text-slate-600 shrink-0">
+            <ListFilter size={11} /> Lọc biển số
+          </label>
+          <div className="relative">
+            <Search size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Input id="at-plate" type="text" placeholder="Biển số..."
+              value={filterPlate} onChange={e => setFilterPlate(e.target.value)}
+              className="h-8 text-xs w-40 pl-6" />
+          </div>
+          {filterPlate && (
+            <button onClick={() => setFilterPlate('')}
+              className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-0.5">
+              <X size={11} /> Xóa
+            </button>
+          )}
         </div>
-        {filterPlate && (
-          <button onClick={() => setFilterPlate('')}
-            className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-0.5">
-            <X size={11} /> Xóa
-          </button>
-        )}
-      </div>
+      </CollapsibleFilterRibbon>
 
       {showErrorBanner && (
         <ErrorState variant="banner" message={`Không thể tải dữ liệu mới. Đang hiển thị dữ liệu cũ. (${error.message})`} />
@@ -129,20 +133,21 @@ export default function AllTrips() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50">
-                  {['Biển số', 'Mã chuyến', 'Kho đầu → Kho cuối', 'Khởi hành', 'Điểm dừng', 'Bills'].map(h => (
-                    <th key={h} className="py-2 px-2 first:pl-4 last:pr-4 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap last:text-right">
+                  {['Biển số', 'Mã chuyến', 'Kho đầu → Kho cuối', 'Khởi hành', 'Điểm dừng', 'Bills'].map((h, i) => (
+                    <th key={h} className={`py-2 px-2 first:pl-4 last:pr-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap ${i === 5 ? 'text-right' : 'text-left'} ${i === 4 ? 'text-center' : ''}`}>
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {displayTrips.map(trip => (
+                {displayTrips.map((trip, index) => (
                   <React.Fragment key={trip.id}>
                     <TripRow
                       trip={trip}
                       isSelected={selectedId === trip.id}
                       onClick={() => setSelectedId(prev => prev === trip.id ? null : trip.id)}
+                      index={index}
                     />
                     {selectedId === trip.id && (
                       <tr><td colSpan={6} className="p-0">

@@ -25,6 +25,6 @@ dist-ssr
 
 .impeccable
 .kiro
-DESIGN.md
-PRODUCT.md
-REFACTOR_PLAN.md
+.kiro/DESIGN.md
+.kiro/PRODUCT.md
+.kiro/REFACTOR_PLAN.md

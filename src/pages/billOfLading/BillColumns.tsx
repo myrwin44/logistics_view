@@ -4,15 +4,15 @@
 
 import type { ColumnDef } from '@tanstack/react-table';
 
-import { StatusBadge } from '@/components/shared/StatusBadge';
 import type { BillListItem } from '@/types/billOfLading';
+import { formatWeight } from '@/lib/format';
 
 export function buildBillColumns(): ColumnDef<BillListItem>[] {
   return [
     {
       id: 'id',
       accessorKey: 'id',
-      header: 'Bill ID',
+      header: 'Mã đơn',
       enableSorting: true,
       cell: ({ row }) => (
         <span className="font-mono text-xs text-ink">{row.original.id}</span>
@@ -21,7 +21,7 @@ export function buildBillColumns(): ColumnDef<BillListItem>[] {
     {
       id: 'originWarehouse',
       accessorKey: 'originWarehouse',
-      header: 'Origin',
+      header: 'Kho đầu',
       enableSorting: false,
       cell: ({ row }) => (
         <span className="text-sm text-ink">{row.original.originWarehouse}</span>
@@ -30,39 +30,48 @@ export function buildBillColumns(): ColumnDef<BillListItem>[] {
     {
       id: 'destinationWarehouse',
       accessorKey: 'destinationWarehouse',
-      header: 'Destination',
+      header: 'Kho cuối',
       enableSorting: false,
       cell: ({ row }) => (
         <span className="text-sm text-ink">{row.original.destinationWarehouse}</span>
       ),
     },
     {
-      id: 'weightKg',
-      accessorKey: 'weightKg',
-      header: 'Weight (kg)',
+      id: 'transportTripId',
+      accessorKey: 'transportTripId',
+      header: 'Mã chuyến',
+      enableSorting: false,
+      cell: ({ row }) => (
+        <span className="font-mono text-xs text-ink">{row.original.transportTripId}</span>
+      ),
+    },
+    {
+      id: 'actualWeight',
+      accessorKey: 'actualWeight',
+      header: 'Khối lượng',
       enableSorting: true,
       cell: ({ row }) => (
         <span className="text-sm tabular-nums text-ink">
-          {row.original.weightKg.toLocaleString()}
+          {formatWeight(row.original.actualWeight)}
         </span>
       ),
     },
     {
-      id: 'status',
-      accessorKey: 'status',
-      header: 'Status',
-      enableSorting: true,
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      id: 'uploadAt',
+      accessorKey: 'uploadAt',
+      header: 'Ngày lên hàng',
+      enableSorting: false,
+      cell: ({ row }) => (
+        <span className="text-sm tabular-nums text-ink">{row.original.uploadAt}</span>
+      ),
     },
     {
-      id: 'scheduledDate',
-      accessorKey: 'scheduledDate',
-      header: 'Scheduled Date',
-      enableSorting: true,
+      id: 'downloadAt',
+      accessorKey: 'downloadAt',
+      header: 'Ngày xuống hàng',
+      enableSorting: false,
       cell: ({ row }) => (
-        <span className="text-sm tabular-nums text-ink">
-          {row.original.scheduledDate ?? '—'}
-        </span>
+        <span className="text-sm tabular-nums text-ink">{row.original.downloadAt}</span>
       ),
     },
   ];

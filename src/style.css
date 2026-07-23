@@ -104,3 +104,7 @@ input[type="week"] {
     transition-duration: 0.01ms !important;
   }
 }
+
+.apexcharts-breadcrumb{
+  top:-10px !important;
+}

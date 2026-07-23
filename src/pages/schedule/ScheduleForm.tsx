@@ -34,13 +34,13 @@ export function ScheduleForm({ onGenerate, isLoading }: ScheduleFormProps) {
     const errors: FieldErrors = {};
 
     if (!startDate) {
-      errors.startDate = 'Start date is required';
+      errors.startDate = 'Cần nhập vào ngày bắt đầu';
     }
 
     if (!endDate) {
-      errors.endDate = 'End date is required';
+      errors.endDate = 'Cần nhập vào ngày kết thúc';
     } else if (startDate && endDate < startDate) {
-      errors.endDate = 'End date must be on or after the start date';
+      errors.endDate = 'Ngày kết thúc không được nhỏ hơn ngày bắt đầu';
     }
 
     return errors;
@@ -64,7 +64,7 @@ export function ScheduleForm({ onGenerate, isLoading }: ScheduleFormProps) {
       <div className="flex flex-wrap items-end gap-4">
         {/* Start date */}
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="schedule-start-date">Start date</Label>
+          <Label htmlFor="schedule-start-date">Ngày bắt đầu</Label>
           <Input
             id="schedule-start-date"
             type="date"
@@ -93,7 +93,7 @@ export function ScheduleForm({ onGenerate, isLoading }: ScheduleFormProps) {
 
         {/* End date */}
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="schedule-end-date">End date</Label>
+          <Label htmlFor="schedule-end-date">Ngày kết thúc</Label>
           <Input
             id="schedule-end-date"
             type="date"
@@ -130,10 +130,10 @@ export function ScheduleForm({ onGenerate, isLoading }: ScheduleFormProps) {
           {isLoading ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-              Generating…
+              Đang lập lịch...
             </>
           ) : (
-            'Generate Schedule'
+            'Lập lịch'
           )}
         </Button>
       </div>

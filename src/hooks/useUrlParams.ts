@@ -70,7 +70,7 @@ export function useUrlParams<TFilter extends Record<string, unknown>>(
 
   const pageRaw = searchParams.get('page');
   const pageNum = Number(pageRaw);
-  const page = Number.isInteger(pageNum) && pageNum >= 1 ? pageNum : 1;
+  const page = Number.isInteger(pageNum) && pageNum >= 0 ? pageNum : 0;
 
   const sortField = parseSortField(searchParams.get('sort'));
   const sortDir = parseSortDir(searchParams.get('dir'));
@@ -100,7 +100,7 @@ export function useUrlParams<TFilter extends Record<string, unknown>>(
           const next = new URLSearchParams(prev);
           field !== undefined ? next.set('sort', field) : next.delete('sort');
           dir !== undefined ? next.set('dir', dir) : next.delete('dir');
-          next.set('page', '1'); // Reset page on sort change (Req 2.4)
+          next.set('page', '0'); // Reset page on sort change (Req 2.4)
           return next;
         },
         { replace: true },
@@ -114,7 +114,7 @@ export function useUrlParams<TFilter extends Record<string, unknown>>(
       setSearchParams(
         (prev) => {
           const next = serializeFilters(new URLSearchParams(prev), partial);
-          next.set('page', '1'); // Reset page on filter change
+          next.set('page', '0'); // Reset page on filter change
           return next;
         },
         { replace: true },

@@ -37,6 +37,16 @@ const config: Config = {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
       },
+      keyframes: {
+        'scale-in': {
+          '0%':   { transform: 'scale(0.6)', opacity: '0' },
+          '60%':  { transform: 'scale(1.2)', opacity: '1' },
+          '100%': { transform: 'scale(1)',   opacity: '1' },
+        },
+      },
+      animation: {
+        'scale-in': 'scale-in 0.2s ease-out forwards',
+      },
     },
   },
   plugins: [],

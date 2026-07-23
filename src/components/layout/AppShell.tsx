@@ -49,13 +49,16 @@ export default function AppShell() {
     <div className="flex h-screen overflow-hidden">
       <Sidebar collapsed={collapsed} onToggle={toggleCollapsed} />
 
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+      <div className="flex flex-col flex-1 min-w-0 overflow-visible">
         <TopBar />
 
         <main
           ref={mainRef}
           tabIndex={-1}
           className="flex-1 overflow-auto p-6 bg-white outline-none min-w-0"
+          style={{
+            backgroundColor: '#F9F8F6'
+          }}
         >
           {/* KeepAlive wraps outlet with max=5 LRU strategy */}
           <KeepAlive activeName={cacheKey} max={5} strategy="LRU">

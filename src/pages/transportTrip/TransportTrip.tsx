@@ -12,6 +12,7 @@ import { Pagination } from '@/components/shared/Pagination';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ErrorState } from '@/components/shared/ErrorState';
 import { StatusBadge } from '@/components/shared/StatusBadge';
+import { CollapsibleFilterRibbon } from '@/components/shared/CollapsibleFilterRibbon';
 
 import { useTransportTrips } from '@/hooks/useTransportTrips';
 
@@ -188,112 +189,114 @@ export default function TransportTrip() {
       </div>
 
       {/* ── Filter bar ───────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-end gap-4 rounded-lg border border-border bg-surface px-4 py-3">
+      <CollapsibleFilterRibbon label="Bộ lọc chuyến xe">
+        <div className="flex flex-wrap items-end gap-4">
 
-        {/* Status multi-select */}
-        <fieldset className="space-y-1">
-          <legend className="text-xs font-semibold text-ink-muted uppercase tracking-wide mb-1.5">
-            Status
-          </legend>
-          <div className="flex flex-wrap gap-2">
-            {TRIP_STATUSES.map((s) => {
-              const active = (statuses ?? []).includes(s);
-              return (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => handleStatusToggle(s)}
-                  aria-pressed={active}
+          {/* Status multi-select */}
+          <fieldset className="space-y-1">
+            <legend className="text-xs font-semibold text-ink-muted uppercase tracking-wide mb-1.5">
+              Status
+            </legend>
+            <div className="flex flex-wrap gap-2">
+              {TRIP_STATUSES.map((s) => {
+                const active = (statuses ?? []).includes(s);
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => handleStatusToggle(s)}
+                    aria-pressed={active}
+                    className={
+                      `inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border transition-colors ` +
+                      `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFBF00] ` +
+                      (active
+                        ? 'bg-[#FFBF00] text-[#283F24] font-semibold border-[#FFBF00]'
+                        : 'bg-white text-ink-muted border-border hover:border-[#FFBF00] hover:text-[#283F24]')
+                    }
+                  >
+                    {s}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          {/* Date range filter */}
+          <fieldset className="space-y-1">
+            <legend className="text-xs font-semibold text-ink-muted uppercase tracking-wide mb-1.5">
+              Date Range
+            </legend>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-col gap-0.5">
+                <label htmlFor="trip-start-date" className="sr-only">
+                  Start date
+                </label>
+                <input
+                  id="trip-start-date"
+                  type="date"
+                  value={pickerStart}
+                  onChange={(e) => setPickerStart(e.target.value)}
+                  aria-describedby={dateError ? 'trip-date-error' : undefined}
                   className={
-                    `inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border transition-colors ` +
-                    `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFBF00] ` +
-                    (active
-                      ? 'bg-[#FFBF00] text-[#283F24] font-semibold border-[#FFBF00]'
-                      : 'bg-white text-ink-muted border-border hover:border-[#FFBF00] hover:text-[#283F24]')
+                    `rounded-md border px-3 py-1.5 text-sm text-ink bg-white ` +
+                    `focus:outline-none focus:ring-2 focus:ring-[#FFBF00] ` +
+                    (dateError ? 'border-red-400' : 'border-border')
                   }
-                >
-                  {s}
-                </button>
-              );
-            })}
-          </div>
-        </fieldset>
-
-        {/* Date range filter */}
-        <fieldset className="space-y-1">
-          <legend className="text-xs font-semibold text-ink-muted uppercase tracking-wide mb-1.5">
-            Date Range
-          </legend>
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex flex-col gap-0.5">
-              <label htmlFor="trip-start-date" className="sr-only">
-                Start date
-              </label>
-              <input
-                id="trip-start-date"
-                type="date"
-                value={pickerStart}
-                onChange={(e) => setPickerStart(e.target.value)}
-                aria-describedby={dateError ? 'trip-date-error' : undefined}
-                className={
-                  `rounded-md border px-3 py-1.5 text-sm text-ink bg-white ` +
-                  `focus:outline-none focus:ring-2 focus:ring-[#FFBF00] ` +
-                  (dateError ? 'border-red-400' : 'border-border')
-                }
-              />
-            </div>
-            <span className="text-ink-muted text-sm" aria-hidden="true">to</span>
-            <div className="flex flex-col gap-0.5">
-              <label htmlFor="trip-end-date" className="sr-only">
-                End date
-              </label>
-              <input
-                id="trip-end-date"
-                type="date"
-                value={pickerEnd}
-                onChange={(e) => setPickerEnd(e.target.value)}
-                aria-describedby={dateError ? 'trip-date-error' : undefined}
-                className={
-                  `rounded-md border px-3 py-1.5 text-sm text-ink bg-white ` +
-                  `focus:outline-none focus:ring-2 focus:ring-[#FFBF00] ` +
-                  (dateError ? 'border-red-400' : 'border-border')
-                }
-              />
-            </div>
-            <button
-              type="button"
-              onClick={handleDateApply}
-              className={
-                `inline-flex items-center rounded-md border border-border bg-white px-3 py-1.5 text-sm font-medium text-ink ` +
-                `hover:bg-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFBF00]`
-              }
-            >
-              Apply
-            </button>
-            {(pickerStart || pickerEnd) && (
+                />
+              </div>
+              <span className="text-ink-muted text-sm" aria-hidden="true">to</span>
+              <div className="flex flex-col gap-0.5">
+                <label htmlFor="trip-end-date" className="sr-only">
+                  End date
+                </label>
+                <input
+                  id="trip-end-date"
+                  type="date"
+                  value={pickerEnd}
+                  onChange={(e) => setPickerEnd(e.target.value)}
+                  aria-describedby={dateError ? 'trip-date-error' : undefined}
+                  className={
+                    `rounded-md border px-3 py-1.5 text-sm text-ink bg-white ` +
+                    `focus:outline-none focus:ring-2 focus:ring-[#FFBF00] ` +
+                    (dateError ? 'border-red-400' : 'border-border')
+                  }
+                />
+              </div>
               <button
                 type="button"
-                onClick={handleDateClear}
+                onClick={handleDateApply}
                 className={
-                  `inline-flex items-center rounded-md border border-border bg-white px-3 py-1.5 text-sm text-ink-muted ` +
+                  `inline-flex items-center rounded-md border border-border bg-white px-3 py-1.5 text-sm font-medium text-ink ` +
                   `hover:bg-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFBF00]`
                 }
               >
-                Clear
+                Apply
               </button>
+              {(pickerStart || pickerEnd) && (
+                <button
+                  type="button"
+                  onClick={handleDateClear}
+                  className={
+                    `inline-flex items-center rounded-md border border-border bg-white px-3 py-1.5 text-sm text-ink-muted ` +
+                    `hover:bg-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFBF00]`
+                  }
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            {dateError && (
+              <p
+                id="trip-date-error"
+                role="alert"
+                className="text-xs text-red-600 mt-1"
+              >
+                {dateError}
+              </p>
             )}
-          </div>
-          {dateError && (
-            <p
-              id="trip-date-error"
-              role="alert"
-              className="text-xs text-red-600 mt-1"
-            >
-              {dateError}
-            </p>
-          )}
-        </fieldset>
-      </div>
+          </fieldset>
+        </div>
+      </CollapsibleFilterRibbon>
 
       {/* ── Error state ────────────────────────────────────────── */}
       {error !== null && !isLoading && (
@@ -306,7 +309,7 @@ export default function TransportTrip() {
       {/* ── Table + pagination ────────────────── */}
       {error === null && (
         <>
-          <div className="rounded-lg border border-border overflow-x-auto">
+          <div className="rounded-lg border border-border overflow-x-auto bg-white">
             <DataTable
               columns={columns}
               data={data}

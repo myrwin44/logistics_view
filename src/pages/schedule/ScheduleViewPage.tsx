@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { GanttChart } from './GanttChart';
 import { useUIStore } from '@/store/uiStore';
 import { useGanttSchedule } from '@/hooks/useGanttSchedule';
+import { CollapsibleFilterRibbon } from '@/components/shared/CollapsibleFilterRibbon';
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -46,26 +47,28 @@ export default function ScheduleViewPage() {
       </header>
 
       {/* ── Plate filter (only local filter remaining) ── */}
-      <div className="bg-white rounded-lg border border-[#E5E7EB] px-4 py-3 flex flex-wrap items-end gap-3">
-        <div className="flex flex-col gap-1">
-          <Label htmlFor="gantt-filter-plate" className="text-xs font-medium text-slate-600">
-            Lọc biển số
-          </Label>
-          <Input
-            id="gantt-filter-plate"
-            type="text"
-            placeholder="Nhập biển số..."
-            value={filterPlate}
-            onChange={(e) => setFilterPlate(e.target.value)}
-            className="h-8 w-44 text-xs"
-          />
+      <CollapsibleFilterRibbon label="Bộ lọc lịch xe">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="gantt-filter-plate" className="text-xs font-medium text-slate-600">
+              Lọc biển số
+            </Label>
+            <Input
+              id="gantt-filter-plate"
+              type="text"
+              placeholder="Nhập biển số..."
+              value={filterPlate}
+              onChange={(e) => setFilterPlate(e.target.value)}
+              className="h-8 w-44 text-xs"
+            />
+          </div>
+          <div className="flex flex-col gap-1 self-end pb-0.5">
+            <span className="text-xs text-slate-400">
+              Khoảng thời gian: <strong className="text-slate-600">{startDate} → {endDate}</strong>
+            </span>
+          </div>
         </div>
-        <div className="flex flex-col gap-1 self-end pb-0.5">
-          <span className="text-xs text-slate-400">
-            Khoảng thời gian: <strong className="text-slate-600">{startDate} → {endDate}</strong>
-          </span>
-        </div>
-      </div>
+      </CollapsibleFilterRibbon>
 
       {/* ── Error indicator — show when fetch failed ── */}
       {error && (
