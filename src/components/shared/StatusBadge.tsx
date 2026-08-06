@@ -38,29 +38,23 @@ const STATUS_MAP: Record<StatusValue, StatusConfig> = {
     label: 'Cancelled',
   },
   // BillStatus
-  Unscheduled: {
+  ESTIMATED: {
     bgClass: 'bg-blue-50',
     textClass: 'text-blue-600',
     icon: Clock,
-    label: 'Unscheduled',
+    label: 'ESTIMATED',
   },
-  Scheduled: {
+  MODIFIED: {
     bgClass: 'bg-amber-50',
     textClass: 'text-amber-600',
     icon: CalendarCheck,
-    label: 'Scheduled',
+    label: 'MODIFIED',
   },
-  'In Transit': {
-    bgClass: 'bg-blue-50',
-    textClass: 'text-blue-400',
-    icon: Truck,
-    label: 'In Transit',
-  },
-  Delivered: {
+  ACTUAL: {
     bgClass: 'bg-green-50',
     textClass: 'text-green-600',
     icon: PackageCheck,
-    label: 'Delivered',
+    label: 'ACTUAL',
   },
 };
 

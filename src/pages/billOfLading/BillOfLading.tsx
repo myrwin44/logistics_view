@@ -53,7 +53,7 @@ export default function BillOfLading() {
     <div className="space-y-4">
       <PageHeader
         icon={FileText}
-        title="Vận đơn"
+        title="Truy xuất đơn hàng"
         description="Tìm và duyệt các đơn vận chuyển."
       />
 
@@ -78,12 +78,16 @@ export default function BillOfLading() {
 
       {/* Prompt — shown before the user has searched */}
       {!hasSearched && (
-        <div className="rounded-lg border border-border bg-white p-12 flex flex-col items-center gap-3 text-center">
-          <div className="w-12 h-12 rounded-full bg-[#FFFBEB] flex items-center justify-center">
-            <Search size={22} className="text-[#FFBF00]" />
-          </div>
-          <p className="text-sm font-medium text-slate-700">Chọn bộ lọc và nhấn <span className="font-semibold text-[#FFBF00]">Tìm</span> để xem vận đơn</p>
-          <p className="text-xs text-slate-400">Kết quả sẽ hiển thị ở đây sau khi tìm kiếm.</p>
+        <div className="flex flex-col items-center justify-center gap-3 h-full py-10 text-center">
+          <Search
+            size={40}
+            className="text-[#9CA3AF] opacity-60"
+            aria-hidden="true"
+          />
+          <h3 className="text-base font-semibold text-[#374151]">
+            Chọn bộ lọc và nhấn Tìm để xem vận đơn
+          </h3>
+          <p className="text-xs text-slate-400">Kết quả tìm kiếm.</p>
         </div>
       )}
 

@@ -76,7 +76,7 @@ export function formatWeight(kg: number): string {
 /**
  * Compact weight for chart axes / tight spaces — no locale separator:
  *  - < 1000 kg  → "850 kg"
- *  - ≥ 1000 kg  → "1.25 tấn"
+ *  - ≥ 1000 kg  → "1 tấn" (integer only, no decimals)
  * Absolute value is used so negative diverging-chart values display correctly.
  */
 export function formatWeightCompact(kg: number): string {
@@ -84,5 +84,5 @@ export function formatWeightCompact(kg: number): string {
   const abs = Math.abs(kg);
   if (abs < 1000) return `${abs} kg`;
   const ton = abs / 1000;
-  return `${ton.toFixed(2)} tấn`;
+  return `${Math.floor(ton)} tấn`;
 }

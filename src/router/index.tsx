@@ -48,7 +48,9 @@ export const router = createBrowserRouter([
             path: '/schedule-view',
             element: <Suspense fallback={null}><ScheduleViewPage /></Suspense>,
             handle: {
-              crumb: () => [{ label: 'Xem Lịch Xe', href: '/schedule-view' }],
+              crumb: () => [
+                  { label: 'Lập lịch', href: '/schedule' },
+                  { label: 'Xem Lịch Xe', href: '/schedule-view' }],
             } satisfies RouteHandle,
           },
           // ── Transport Trips ───────────────────────────────────────────────

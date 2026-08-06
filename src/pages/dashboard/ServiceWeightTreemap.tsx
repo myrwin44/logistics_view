@@ -4,6 +4,7 @@
  * Drilldown: warehouses within a service, sized by totalWeight per warehouse.
  */
 
+import { Briefcase } from 'lucide-react';
 import ReactApexChart from 'react-apexcharts';
 import type { ApexOptions } from 'apexcharts';
 
@@ -91,8 +92,15 @@ export function ServiceWeightTreemap({ data, isLoading }: ServiceWeightTreemapPr
 
   if (active.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-        <p className="text-sm font-medium text-gray-500">Không có dữ liệu tỉ trọng dịch vụ cho kì này</p>
+      <div className="flex flex-col items-center justify-center gap-3 h-full py-10 text-center">
+        <Briefcase
+          size={40}
+          className="text-[#9CA3AF] opacity-60"
+          aria-hidden="true"
+        />
+        <h3 className="text-base font-semibold text-[#374151]">
+          Không có dữ liệu tỉ trọng dịch vụ cho kì này
+        </h3>
       </div>
     );
   }

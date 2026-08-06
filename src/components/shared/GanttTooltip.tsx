@@ -137,7 +137,7 @@ export function IdleCard({ data }: { data: IdleTripSchedule }) {
       <div className="border-t border-slate-100 pt-2 grid grid-cols-2 gap-2">
         <div>
           <div className="flex items-center gap-1 text-[10px] text-emerald-600 font-semibold mb-1">
-            <Upload size={10} /><span>Nhập</span>
+            <Upload size={10} /><span>Lên</span>
           </div>
           <p className="text-[11px] text-slate-600">
             <span className="font-semibold">{fmtNum(data.totalUploadBill)}</span>
@@ -147,7 +147,7 @@ export function IdleCard({ data }: { data: IdleTripSchedule }) {
         </div>
         <div>
           <div className="flex items-center gap-1 text-[10px] text-rose-500 font-semibold mb-1">
-            <Download size={10} /><span>Xuất</span>
+            <Download size={10} /><span>Xuống</span>
           </div>
           <p className="text-[11px] text-slate-600">
             <span className="font-semibold">{fmtNum(data.totalDownloadBill)}</span>
@@ -173,10 +173,8 @@ export interface GanttTipState {
 
 export function GanttTooltipCard({
   tip,
-  onClose,
 }: {
   tip: GanttTipState;
-  onClose: () => void;
 }) {
   const ref  = React.useRef<HTMLDivElement>(null);
   const [pos, setPos] = React.useState<{ left: number; top: number } | null>(null);
@@ -212,13 +210,6 @@ export function GanttTooltipCard({
       }}
       className="bg-white rounded-2xl shadow-2xl border border-slate-200 p-4"
     >
-      <button
-        onClick={onClose}
-        className="absolute top-3 right-3 text-slate-300 hover:text-slate-600 transition-colors rounded-full w-5 h-5 flex items-center justify-center text-base leading-none"
-        style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-        aria-label="Đóng"
-      >×</button>
-
       {tip.kind === 'idle'
         ? <IdleCard   data={tip.data as IdleTripSchedule} />
         : <MovingCard data={tip.data as MovingTripSchedule} />}

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Building2, ArrowDownToLine, ArrowUpFromLine, Package } from 'lucide-react';
 import ReactApexChart from 'react-apexcharts';
 import type { ApexOptions } from 'apexcharts';
@@ -85,24 +86,40 @@ interface ButterflyChartProps {
 }
 
 function ButterflyChart({ ranked }: ButterflyChartProps) {
+  const [showIn, setShowIn] = useState(true);
+  const [showOut, setShowOut] = useState(true);
+
   // Show top 15 to keep chart readable
   const top15 = ranked.slice(0, 15);
 
   const categories = top15.map((w) => w.warehouseName);
 
-  // ApexCharts diverging pattern:
-  // "Vào" series → negative values (extends left)
-  // "Ra"  series → positive values (extends right)
+  // Build series — replace hidden series with zeros so stacked layout holds
   const series: ApexOptions['series'] = [
     {
       name: 'Vào',
-      data: top15.map((w) => -w.totalInLoad),
+      data: top15.map((w) => (showIn ? -w.totalInLoad : 0)),
     },
     {
       name: 'Ra',
-      data: top15.map((w) => w.totalOutLoad),
+      data: top15.map((w) => (showOut ? w.totalOutLoad : 0)),
     },
   ];
+
+  // Compute axis bounds based on visible series
+  const maxIn = showIn ? Math.max(...top15.map((w) => w.totalInLoad), 0) : 0;
+  const maxOut = showOut ? Math.max(...top15.map((w) => w.totalOutLoad), 0) : 0;
+
+  // Round up to nearest 1 000 000 kg (1 000 tấn)
+  const STEP = 1_000_000;
+  const roundIn = Math.ceil(maxIn / STEP) * STEP || (showIn ? STEP : 0);
+  const roundOut = Math.ceil(maxOut / STEP) * STEP || (showOut ? STEP : 0);
+  const bound = Math.max(roundIn, roundOut, STEP);
+
+  // Symmetric when both visible; one-sided when only one is visible
+  const axisMin = showIn ? -bound : 0;
+  const axisMax = showOut ? bound : 0;
+  const tickAmount = ((axisMax - axisMin) / STEP);
 
   const options: ApexOptions = {
     chart: {
@@ -114,13 +131,13 @@ function ButterflyChart({ ranked }: ButterflyChartProps) {
         enabled: true,
         easing: 'easeinout',
         speed: 600,
-        animateGradually: {
-          enabled: true,
-          delay: 80,
-        },
-        dynamicAnimation: {
-          enabled: true,
-          speed: 450,
+        animateGradually: { enabled: true, delay: 80 },
+        dynamicAnimation: { enabled: true, speed: 450 },
+      },
+      events: {
+        legendClick: (_ctx, seriesIndex) => {
+          if (seriesIndex === 0) setShowIn((v) => !v);
+          if (seriesIndex === 1) setShowOut((v) => !v);
         },
       },
     },
@@ -130,43 +147,34 @@ function ButterflyChart({ ranked }: ButterflyChartProps) {
     plotOptions: {
       bar: {
         horizontal: true,
-        barHeight: '70%',
+        barHeight: '56%',
         borderRadius: 4,
         borderRadiusApplication: 'end',
         borderRadiusWhenStacked: 'all',
       },
     },
 
-    dataLabels: {
-      enabled: false,
-    },
+    dataLabels: { enabled: false },
 
-    stroke: {
-      width: 0,
-    },
+    stroke: { width: 0 },
 
     grid: {
       borderColor: '#F3F4F6',
-      xaxis: {
-        lines: { show: true },
-      },
-      yaxis: {
-        lines: { show: false },
-      },
+      xaxis: { lines: { show: true } },
+      yaxis: { lines: { show: false } },
     },
 
     xaxis: {
       categories,
+      min: axisMin,
+      max: axisMax,
+      tickAmount,
       labels: {
-        formatter: (val: string) => formatKgAxis(Number(val)),
+        formatter: (val: string) => formatKgAxis(Math.abs(Number(val))),
         style: { fontSize: '10px', colors: '#9CA3AF' },
       },
       axisBorder: { show: false },
       axisTicks: { show: false },
-      title: {
-        // Render "Vào" and "Ra" sub-labels via custom annotation instead
-        text: undefined,
-      },
     },
 
     yaxis: {
@@ -193,11 +201,10 @@ function ButterflyChart({ ranked }: ButterflyChartProps) {
         size: 8,
       },
       itemMargin: { horizontal: 12 },
-      // Shift right by half of YAxis width (140px) so legend centres over the plot area
-      offsetX: 70,
+      // Offset by half of yaxis maxWidth (140px) to centre over the plot area
+      offsetX: 80,
     },
 
-    // "Vào" / "Ra" annotation below x-axis
     annotations: {
       xaxis: [
         {
@@ -211,16 +218,18 @@ function ButterflyChart({ ranked }: ButterflyChartProps) {
   };
 
   // Dynamic height: ~34px per row + top/bottom margin
-  const chartHeight = Math.max(280, top15.length * 34 + 80);
+  const chartHeight = Math.max(280, top15.length * 22 + 80);
 
   return (
-    <div aria-hidden="true">
-      <ReactApexChart
-        type="bar"
-        series={series}
-        options={options}
-        height={chartHeight}
-      />
+    <div>
+      <div aria-hidden="true">
+        <ReactApexChart
+          type="bar"
+          series={series}
+          options={options}
+          height={chartHeight}
+        />
+      </div>
     </div>
   );
 }
@@ -269,28 +278,28 @@ function RankingsList({ ranked }: RankingsListProps) {
             <dl className="mt-1.5 grid grid-cols-2 gap-x-2 gap-y-0.5 pl-7">
               <div className="flex items-center gap-1">
                 <ArrowDownToLine size={10} className="flex-shrink-0" style={{ color: COLOR_IN }} aria-hidden="true" />
-                <dt className="text-[10px] text-[#6B7280]">Nhập:</dt>
+                <dt className="text-[10px] text-[#6B7280]">Vào:</dt>
                 <dd className="text-[10px] tabular-nums font-medium text-[#374151] truncate">
                   {formatKgFull(wh.totalInLoad)}
                 </dd>
               </div>
               <div className="flex items-center gap-1">
                 <ArrowUpFromLine size={10} className="flex-shrink-0" style={{ color: COLOR_OUT }} aria-hidden="true" />
-                <dt className="text-[10px] text-[#6B7280]">Xuất:</dt>
+                <dt className="text-[10px] text-[#6B7280]">Ra:</dt>
                 <dd className="text-[10px] tabular-nums font-medium text-[#374151] truncate">
                   {formatKgFull(wh.totalOutLoad)}
                 </dd>
               </div>
               <div className="flex items-center gap-1">
                 <Package size={10} className="text-[#9CA3AF] flex-shrink-0" aria-hidden="true" />
-                <dt className="text-[10px] text-[#6B7280]">B.nhập:</dt>
+                <dt className="text-[10px] text-[#6B7280]">SL.vào:</dt>
                 <dd className="text-[10px] tabular-nums font-medium text-[#374151]">
                   {wh.totalInBills.toLocaleString()}
                 </dd>
               </div>
               <div className="flex items-center gap-1">
                 <Package size={10} className="text-[#9CA3AF] flex-shrink-0" aria-hidden="true" />
-                <dt className="text-[10px] text-[#6B7280]">B.xuất:</dt>
+                <dt className="text-[10px] text-[#6B7280]">SL.ra:</dt>
                 <dd className="text-[10px] tabular-nums font-medium text-[#374151]">
                   {wh.totalOutBills.toLocaleString()}
                 </dd>

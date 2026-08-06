@@ -3,7 +3,7 @@ import { useLocation, useOutlet } from 'react-router-dom';
 import KeepAlive from 'keepalive-for-react';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
-import { useScrollRestoration } from '../../hooks/useScrollRestoration';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration.ts';
 
 // ---------------------------------------------------------------------------
 // localStorage key for sidebar collapsed state

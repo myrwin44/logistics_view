@@ -122,9 +122,15 @@ export default function AllTrips() {
         {isLoading && !hasData && <LoadingState variant="full" />}
 
         {!isLoading && !error && displayTrips.length === 0 && (
-          <div className="flex flex-col items-center gap-2 py-12 text-slate-400 text-sm">
-            <Truck size={32} className="text-slate-200" />
-            <span>Không tìm thấy chuyến xe nào.</span>
+          <div className="flex flex-col items-center justify-center gap-3 h-full py-10 text-center">
+            <Truck
+              size={40}
+              className="text-[#9CA3AF] opacity-60"
+              aria-hidden="true"
+            />
+            <h3 className="text-base font-semibold text-[#374151]">
+              Không tìm thấy chuyến xe nào.
+            </h3>
           </div>
         )}
 

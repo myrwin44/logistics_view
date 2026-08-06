@@ -79,7 +79,7 @@ const NAV_GROUPS: NavGroup[] = [
         icon: CalendarRange,
         matchPaths: ['/schedule', '/schedule-view'],
         items: [
-          { path: '/schedule', label: 'Lập Lịch' },
+          { path: '/schedule', label: 'Tạo Lịch Tự Động' },
           { path: '/schedule-view', label: 'Xem Lịch Xe' },
         ],
       },
@@ -101,7 +101,7 @@ const NAV_GROUPS: NavGroup[] = [
         icon: FileText,
         matchPaths: ['/bills'],
         items: [
-          { path: '/bills', label: 'Truy xuất đơn hàng' },
+          { path: '/bills', label: 'Vận Đơn' },
         ],
       },
     ],

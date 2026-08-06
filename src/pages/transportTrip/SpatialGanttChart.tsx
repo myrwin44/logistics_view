@@ -186,7 +186,7 @@ export function SpatialGanttChart({ vehicles }: Props) {
             {/* trip rows */}
             {items.map(item => {
               if (item.kind === 'vehicle') return null;
-              const { trip, rowIdx, group } = item;
+              const { trip, rowIdx } = item;
               const cy = rowY(rowIdx);
               
               // Collect all warehouse indices used by this trip
@@ -293,7 +293,7 @@ export function SpatialGanttChart({ vehicles }: Props) {
         </div>
 
         {tip && (
-          <GanttTooltipCard tip={tip} onClose={() => setTip(null)} />
+          <GanttTooltipCard tip={tip} />
         )}
       </div>
     </div>

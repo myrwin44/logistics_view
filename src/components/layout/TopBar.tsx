@@ -18,7 +18,7 @@ import { format } from 'date-fns';
 
 const ROUTE_LABELS: Record<string, string> = {
   '/': 'Bảng Điều Khiển',
-  '/schedule': 'Lập Lịch Vận Chuyển',
+  '/schedule': 'Lập Lịch',
   '/transport-trips': 'Tuyến Xe',
   '/bills': 'Vận Đơn',
   '/settings': 'Cài Đặt',

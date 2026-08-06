@@ -10,11 +10,8 @@
 import * as React from 'react';
 import type { VehicleSchedule, IdleTripSchedule, MovingTripSchedule } from '@/types/schedule';
 import {
-  MovingCard,
-  IdleCard,
   GanttTooltipCard,
   type GanttTipState,
-  TOOLTIP_W,
 } from '@/components/shared/GanttTooltip';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -27,7 +24,6 @@ const ROW_HEIGHT   = 32;
 const HEADER_HEIGHT = 56;
 const LABEL_WIDTH   = 100;
 const MIN_BAR_PX    = 2;
-const TOOLTIP_GAP   = 10;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -41,12 +37,6 @@ interface GanttBar {
   data: IdleTripSchedule | MovingTripSchedule;
 }
 
-interface TooltipState {
-  bar: GanttBar;
-  /** viewport-relative rect of the bar element */
-  barRect: DOMRect;
-}
-
 export interface GanttChartProps {  vehicles: VehicleSchedule[];
   /** px per millisecond — controls zoom level */
   pxPerMs?: number;
@@ -56,35 +46,6 @@ export interface GanttChartProps {  vehicles: VehicleSchedule[];
 
 function toMs(iso: string): number { return new Date(iso).getTime(); }
 
-/** Format HH:mm only */
-function fmtTime(iso: string): string {
-  const d = new Date(iso);
-  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-}
-
-/** Format date DD/MM */
-function fmtDate(iso: string): string {
-  const d = new Date(iso);
-  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
-}
-
-/** Format số phút thành "Xh Ym" */
-function fmtMinutes(totalMin: number): string {
-  const h = Math.floor(totalMin / 60);
-  const m = totalMin % 60;
-  if (h === 0) return `${m} phút`;
-  if (m === 0) return `${h}h`;
-  return `${h}h ${m}ph`;
-}
-
-function fmtNum(n: number): string {
-  return n.toLocaleString('vi-VN', { maximumFractionDigits: 2 });
-}
-
-/** Strip "Kho " prefix for compact display */
-function shortWh(name: string): string {
-  return name.replace(/^Kho\s+/i, '').trim();
-}
 function buildBars(vs: VehicleSchedule): GanttBar[] {
   const bars: GanttBar[] = [];
   for (const trip of vs.trips) {
@@ -112,6 +73,48 @@ function buildBars(vs: VehicleSchedule): GanttBar[] {
 
 function getLicensePlate(vs: VehicleSchedule): string {
   return vs.licensePlate || 'Unknown';
+}
+
+interface Overlap { startMs: number; endMs: number; }
+
+function calculateOverlaps(bars: GanttBar[]): Overlap[] {
+  const overlaps: Overlap[] = [];
+  // Sort bars by start time to simplify overlap detection
+  const sortedBars = [...bars].sort((a, b) => a.startMs - b.startMs);
+
+  for (let i = 0; i < sortedBars.length; i++) {
+    for (let j = i + 1; j < sortedBars.length; j++) {
+      const barA = sortedBars[i];
+      const barB = sortedBars[j];
+
+      // Check for overlap
+      if (barA.endMs > barB.startMs && barA.startMs < barB.endMs) {
+        const overlapStart = Math.max(barA.startMs, barB.startMs);
+        const overlapEnd   = Math.min(barA.endMs, barB.endMs);
+        overlaps.push({ startMs: overlapStart, endMs: overlapEnd });
+      }
+    }
+  }
+
+  // Merge overlapping intervals (e.g., [1,5] and [3,7] becomes [1,7])
+  if (overlaps.length === 0) return [];
+
+  const mergedOverlaps: Overlap[] = [];
+  let currentOverlap = { ...overlaps[0] };
+
+  for (let i = 1; i < overlaps.length; i++) {
+    const nextOverlap = overlaps[i];
+    if (nextOverlap.startMs <= currentOverlap.endMs) {
+      currentOverlap.endMs = Math.max(currentOverlap.endMs, nextOverlap.endMs);
+    }
+    else {
+      mergedOverlaps.push(currentOverlap);
+      currentOverlap = { ...nextOverlap };
+    }
+  }
+  mergedOverlaps.push(currentOverlap);
+
+  return mergedOverlaps;
 }
 
 function buildTimeTicks(startMs: number, endMs: number) {
@@ -267,6 +270,7 @@ export function GanttChart({ vehicles, pxPerMs }: GanttChartProps) {
             {/* Vehicle rows */}
             {vehicles.map((vs, rowIdx) => {
               const bars = buildBars(vs);
+              const overlaps = calculateOverlaps(bars);
               const plate = getLicensePlate(vs);
               return (
                 <div
@@ -290,7 +294,7 @@ export function GanttChart({ vehicles, pxPerMs }: GanttChartProps) {
                     const isIdle    = bar.type === 'idle';
                     const bgColor   = isIdle ? COLOR_IDLE   : COLOR_MOVING;
                     const borderCol = isIdle ? COLOR_IDLE_BORDER : COLOR_MOVING_BORDER;
-                    const isActive  = tooltip?.bar === bar;
+                    const isActive  = tooltip?.data === bar.data;
                     const PAD = 4;
 
                     return (
@@ -344,6 +348,29 @@ export function GanttChart({ vehicles, pxPerMs }: GanttChartProps) {
                       </div>
                     );
                   })}
+
+                  {/* Overlap overlays with red diagonal stripes */}
+                  {overlaps.map((overlap, idx) => {
+                    const left  = (overlap.startMs - globalStart) * resolvedPxPerMs;
+                    const width = Math.max(MIN_BAR_PX, (overlap.endMs - overlap.startMs) * resolvedPxPerMs);
+                    const PAD = 4;
+                    return (
+                      <div
+                        key={`overlap-${idx}`}
+                        style={{
+                          position: 'absolute',
+                          left,
+                          top: PAD,
+                          width,
+                          height: ROW_HEIGHT - PAD * 2,
+                          background: 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(239, 68, 68, 0.4) 4px, rgba(239, 68, 68, 0.4) 8px)',
+                          borderRadius: 7,
+                          pointerEvents: 'none',
+                          zIndex: 2,
+                        }}
+                      />
+                    );
+                  })}
                 </div>
               );
             })}
@@ -355,7 +382,6 @@ export function GanttChart({ vehicles, pxPerMs }: GanttChartProps) {
       {tooltip && (
         <GanttTooltipCard
           tip={tooltip}
-          onClose={() => setTooltip(null)}
         />
       )}
     </div>

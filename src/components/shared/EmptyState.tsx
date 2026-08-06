@@ -25,11 +25,11 @@ export function EmptyState({
     >
       <Icon
         size={40}
-        className="text-ink-muted opacity-50"
+        className="text-[#9CA3AF] opacity-60"
         aria-hidden="true"
       />
 
-      <h3 className="text-base font-semibold text-ink">{heading}</h3>
+      <h3 className="text-base font-semibold text-[#374151]">{heading}</h3>
 
       {description && (
         <p className="text-sm text-ink-muted max-w-xs">{description}</p>
