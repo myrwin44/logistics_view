@@ -75,8 +75,8 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_REGISTRY_USER }}/${{ vars.DOCKER_IMAGE }}:${{ steps.get_version.outputs.VERSION }}
 
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
 
   deploy:
     name: Deploy Server
