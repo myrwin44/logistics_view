@@ -52,7 +52,9 @@ function safeParseJSON<T>(text: string): T {
 // Core request
 // ---------------------------------------------------------------------------
 
-const BASE_URL = window.__ENV__.API_BASE_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:4444/api';
+const BASE_URL = (window as typeof window & { __ENV__?: { API_BASE_URL?: string } }).__ENV__?.API_BASE_URL
+  || import.meta.env.VITE_API_BASE_URL
+  || 'http://localhost:4444/api';
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem('session_token');
