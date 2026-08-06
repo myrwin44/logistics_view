@@ -5,7 +5,12 @@ import { MemoryRouter } from 'react-router-dom';
 import Login from '../../pages/Login';
 import * as AuthContextModule from '../../contexts/AuthContext';
 
-// Mock useAuth
+// Hoist mocks so they're available before vi.mock factories execute
+const { mockNavigate } = vi.hoisted(() => ({
+  mockNavigate: vi.fn(),
+}));
+
+// Mock useAuth — no top-level variables in factory
 vi.mock('../../contexts/AuthContext', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../contexts/AuthContext')>();
   return {
@@ -14,8 +19,7 @@ vi.mock('../../contexts/AuthContext', async (importOriginal) => {
   };
 });
 
-// Mock useNavigate
-const mockNavigate = vi.fn();
+// Mock useNavigate using the hoisted mock
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-router-dom')>();
   return {
@@ -23,6 +27,10 @@ vi.mock('react-router-dom', async (importOriginal) => {
     useNavigate: () => mockNavigate,
   };
 });
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 const mockLogin = vi.fn();
 
@@ -40,6 +48,10 @@ function renderLogin() {
     </MemoryRouter>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
 
 describe('pages/Login - Component Tests', () => {
   afterEach(() => {
@@ -59,7 +71,6 @@ describe('pages/Login - Component Tests', () => {
 
     await user.click(screen.getByRole('button', { name: /đăng nhập/i }));
 
-    // Check specifically by id to avoid ambiguity with multiple alerts
     await waitFor(() => {
       const usernameError = document.getElementById('username-error');
       expect(usernameError).toBeTruthy();
@@ -75,8 +86,7 @@ describe('pages/Login - Component Tests', () => {
     await user.click(screen.getByRole('button', { name: /đăng nhập/i }));
 
     await waitFor(() => {
-      const passwordError = document.getElementById('password-error');
-      expect(passwordError).toBeTruthy();
+      expect(document.getElementById('password-error')).toBeTruthy();
     });
   });
 
@@ -132,7 +142,6 @@ describe('pages/Login - Component Tests', () => {
 
   it('should disable submit button while login is in progress', async () => {
     const user = userEvent.setup();
-    // Never resolves — simulates in-flight request
     mockLogin.mockReturnValue(new Promise(() => {}));
     renderLogin();
 
@@ -150,14 +159,12 @@ describe('pages/Login - Component Tests', () => {
     const user = userEvent.setup();
     renderLogin();
 
-    // Trigger validation errors first
     await user.click(screen.getByRole('button', { name: /đăng nhập/i }));
 
     await waitFor(() => {
       expect(document.getElementById('username-error')).toBeTruthy();
     });
 
-    // Start typing in username — error should clear
     await user.type(screen.getByLabelText(/username/i), 'a');
 
     await waitFor(() => {
