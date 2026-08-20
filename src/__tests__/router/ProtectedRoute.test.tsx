@@ -4,7 +4,7 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import ProtectedRoute from '../../router/ProtectedRoute';
 import * as AuthContextModule from '../../contexts/AuthContext';
 
-// Mock useAuth
+// Mock useAuth — no factory needed, just vi.fn() the whole module
 vi.mock('../../contexts/AuthContext', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../contexts/AuthContext')>();
   return {
