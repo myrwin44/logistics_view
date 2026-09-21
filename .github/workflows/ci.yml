@@ -119,16 +119,19 @@ jobs:
             docker pull $IMAGE_NAME
 
 
-            if docker ps -aq -f name=^/${CONTAINER_NAME}$ > /dev/null; then
-
-              if docker ps -q -f name=^/${CONTAINER_NAME}$ > /dev/null; then
-                docker stop $CONTAINER_NAME
+            if docker ps -a --format '{{.Names}}' | grep -Fxq "$CONTAINER_NAME"; then
+              echo "Old container found."
+            
+              if docker ps --format '{{.Names}}' | grep -Fxq "$CONTAINER_NAME"; then
+                echo "Stopping old container..."
+                docker stop "$CONTAINER_NAME"
               fi
-
-              docker rm $CONTAINER_NAME
-
+            
+              echo "Removing old container..."
+              docker rm "$CONTAINER_NAME"
+            else
+              echo "No old container found."
             fi
-
 
             echo "Start new container..."
 
